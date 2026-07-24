@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>عاوز — نموذج تجريبي</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css">
+  <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#0b1020;color:#f8fafc;font-family:Arial,sans-serif}.phone{max-width:430px;min-height:100vh;margin:auto;background:#111827;padding-bottom:60px}header{position:sticky;top:0;z-index:9;display:flex;justify-content:space-between;align-items:center;padding:15px;background:#111827ee;border-bottom:1px solid #263047}h1{font-size:22px;margin:0}.cart{background:#f59e0b;color:#111827;border:0;border-radius:999px;padding:10px 14px;font-weight:bold}main{padding:18px}.hero{text-align:center;padding:32px 0 20px}.logo{width:86px;height:86px;border-radius:50%;background:#f59e0b;color:#111827;display:grid;place-items:center;margin:auto;font-size:48px;font-weight:900}input{width:100%;padding:16px;border-radius:16px;border:1px solid #34405a;background:#0f172a;color:white;font-size:17px}.actions{display:grid;grid-template-columns:1fr 60px;gap:10px;margin-top:10px}button{border:0;border-radius:14px;padding:14px;font-size:16px;font-weight:bold;cursor:pointer}.primary{background:#f59e0b;color:#111827}.mic{background:#1f2937;color:white}.chips{display:flex;gap:8px;overflow:auto;margin:18px 0}.chips button{white-space:nowrap;background:#1f2937;color:white;padding:10px}.card{background:#1a2334;border:1px solid #2d3a52;border-radius:18px;padding:15px;margin:12px 0}.muted{color:#aab4c6}.row{display:flex;justify-content:space-between;gap:10px;align-items:center}.product{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #2d3a52;padding:12px 0}.qty{display:flex;gap:8px;align-items:center}.qty button{padding:8px 11px;background:#334155;color:white}.hidden{display:none!important}.back{background:transparent;color:white;padding:4px}.wide{width:100%;margin-top:12px}.total{font-size:22px;font-weight:900}#panorama{height:68vh;border-radius:18px;overflow:hidden}.hot{width:34px;height:34px;border-radius:50%;background:#f59e0b;border:3px solid white}.toast{position:fixed;bottom:22px;right:50%;transform:translateX(50%);background:#f8fafc;color:#111827;padding:12px 18px;border-radius:999px;display:none;z-index:30}
+  </style>
+</head>
+<body>
+<div class="phone">
+  <header>
+    <button class="back hidden" id="backBtn">رجوع</button>
+    <h1 id="title">عاوز</h1>
+    <button class="cart" id="cartBtn">السلة <span id="cartCount">0</span></button>
+  </header>
+  <main>
+    <section id="home">
+      <div class="hero"><div class="logo">ع</div><h2>عاوز... هتلاقي</h2><p class="muted">قول أو اكتب أنت عاوز إيه في بنها</p></div>
+      <input id="query" placeholder="مثال: عاوز زيت ورز من أقرب سوبر ماركت">
+      <div class="actions"><button class="primary" id="searchBtn">دور لي</button><button class="mic" id="micBtn">🎙️</button></div>
+      <div class="chips"><button>سوبر ماركت</button><button>مطعم</button><button>ملابس</button><button>عربيات</button></div>
+    </section>
+    <section id="results" class="hidden"></section>
+    <section id="store" class="hidden"></section>
+    <section id="cart" class="hidden"></section>
+    <section id="tour" class="hidden"><div id="panorama"></div><button class="primary wide" id="tourCart">افتح السلة</button></section>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const business={name:'خير زمان — بنها',category:'سوبر ماركت',address:'وسط بنها، القليوبية',distance:1.2,rating:4.5,products:[{id:'oil',name:'زيت خليط 1 لتر',price:78},{id:'rice',name:'أرز مصري 1 كجم',price:42},{id:'chips',name:'شيبسي كبير',price:18},{id:'detergent',name:'مسحوق غسيل 2.5 كجم',price:165}]};
+const cart={};let current='home',viewer=null;const sections=['home','results','store','cart','tour'];
+function show(id,title){sections.forEach(x=>document.getElementById(x).classList.toggle('hidden',x!==id));current=id;document.getElementById('title').textContent=title;document.getElementById('backBtn').classList.toggle('hidden',id==='home')}
+function count(){return Object.values(cart).reduce((a,x)=>a+x,0)}
+function money(n){return new Intl.NumberFormat('ar-EG',{style:'currency',currency:'EGP'}).format(n)}
+function updateCount(){document.getElementById('cartCount').textContent=count()}
+function toast(text){const el=document.getElementById('toast');el.textContent=text;el.style.display='block';setTimeout(()=>el.style.display='none',1400)}
+function add(id){cart[id]=(cart[id]||0)+1;updateCount();toast('اتضاف للسلة')}
+function remove(id){if(cart[id]>1)cart[id]--;else delete cart[id];updateCount();renderCart()}
+function results(){document.getElementById('results').innerHTML=`<h2>الأقرب والأفضل ليك</h2><div class="card" onclick="store()"><div class="row"><strong>${business.name}</strong><span>${business.rating} ★</span></div><p>${business.category} • ${business.address}</p><p class="muted">${business.distance} كم • مفتوح الآن • سلة شراء • جولة 360</p></div>`;show('results','النتائج')}
+function store(){document.getElementById('store').innerHTML=`<h2>${business.name}</h2><p class="muted">${business.address} • ${business.distance} كم</p><button class="primary wide" onclick="tour()">ادخل جولة 360 واختار من جوه المحل</button><div class="card">${business.products.map(p=>`<div class="product"><div><strong>${p.name}</strong><br><span class="muted">${money(p.price)}</span></div><button class="primary" onclick="add('${p.id}')">ضيف</button></div>`).join('')}</div>`;show('store','المتجر')}
+function renderCart(){const lines=business.products.filter(p=>cart[p.id]);const total=lines.reduce((sum,p)=>sum+p.price*cart[p.id],0);document.getElementById('cart').innerHTML=lines.length?`<h2>فاتورتك</h2><div class="card">${lines.map(p=>`<div class="product"><div><strong>${p.name}</strong><br>${cart[p.id]} × ${money(p.price)}</div><div class="qty"><button onclick="remove('${p.id}')">−</button><b>${cart[p.id]}</b><button onclick="add('${p.id}');renderCart()">+</button></div></div>`).join('')}</div><div class="row total"><span>الإجمالي</span><span>${money(total)}</span></div><p class="muted">التوصيل والدفع يضافان بعد تحديد العنوان.</p><button class="primary wide">تأكيد الطلب — تجريبي</button>`:'<div class="hero"><h2>السلة فاضية</h2></div>';show('cart','سلة المشتريات')}
+function tour(){show('tour','جولة 360');if(viewer)return;viewer=pannellum.viewer('panorama',{type:'equirectangular',panorama:'https://pannellum.org/images/alma.jpg',autoLoad:true,hotSpots:[{pitch:-8,yaw:-55,cssClass:'hot',clickHandlerFunc:()=>add('oil')},{pitch:-2,yaw:-5,cssClass:'hot',clickHandlerFunc:()=>add('rice')},{pitch:5,yaw:40,cssClass:'hot',clickHandlerFunc:()=>add('chips')},{pitch:1,yaw:85,cssClass:'hot',clickHandlerFunc:()=>add('detergent')}]})}
+document.getElementById('searchBtn').onclick=results;
+document.querySelectorAll('.chips button').forEach(button=>button.onclick=()=>{document.getElementById('query').value=button.textContent;results()});
+document.getElementById('cartBtn').onclick=renderCart;document.getElementById('tourCart').onclick=renderCart;
+document.getElementById('backBtn').onclick=()=>{if(current==='results')show('home','عاوز');else if(current==='store')results();else store()};
+document.getElementById('micBtn').onclick=()=>{const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SpeechRecognition){toast('البحث الصوتي غير مدعوم في المتصفح ده');return}const recognition=new SpeechRecognition();recognition.lang='ar-EG';recognition.onresult=event=>{document.getElementById('query').value=event.results[0][0].transcript;results()};recognition.start();toast('اتكلم دلوقتي')};
+</script>
+</body>
+</html>
