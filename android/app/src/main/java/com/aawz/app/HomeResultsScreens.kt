@@ -150,11 +150,9 @@ fun ResultsScreen(
                         Text("${business.rating} ★")
                     }
                     Text("${business.category} • ${business.address}")
-                    Text(
-                        "${business.distanceKm} كم • مفتوح الآن" +
-                            if (business.hasCart) " • سلة" else "" +
-                            if (business.hasTour360) " • 360" else ""
-                    )
+                    val cartFeature = if (business.hasCart) " • سلة" else ""
+                    val tourFeature = if (business.hasTour360) " • 360" else ""
+                    Text("${business.distanceKm} كم • مفتوح الآن$cartFeature$tourFeature")
                 }
             }
         }
