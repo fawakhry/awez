@@ -5,6 +5,7 @@ on:
     branches: ["main"]
     paths:
       - "prototype/**"
+      - "tests/**"
       - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
 
@@ -27,11 +28,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Test order review enhancement
+        run: |
+          node --check prototype/order-review.js
+          node tests/order-review.test.js
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Add accessibility enhancements
-        run: sed -i 's#</body>#<script src="./accessibility.js"></script></body>#' prototype/index.html
+      - name: Add prototype enhancements
+        run: sed -i 's#</body>#<script src="./accessibility.js"></script><script src="./order-review.js"></script></body>#' prototype/index.html
 
       - name: Upload website
         uses: actions/upload-pages-artifact@v4
