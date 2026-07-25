@@ -86,6 +86,11 @@ jobs:
           node --check prototype/cross-tab-sync.js
           node tests/cross-tab-sync.test.cjs
 
+      - name: Test network status enhancement
+        run: |
+          node --check prototype/network-status.js
+          node tests/network-status.test.cjs
+
   deploy:
     if: github.event_name != 'pull_request'
     needs: test
@@ -143,6 +148,9 @@ jobs:
 
       - name: Add cross-tab synchronization
         run: sed -i 's#</body>#<script src="./cross-tab-sync.js"></script></body>#' prototype/index.html
+
+      - name: Add network status enhancement
+        run: sed -i 's#</body>#<script src="./network-status.js"></script></body>#' prototype/index.html
 
       - name: Upload website
         uses: actions/upload-pages-artifact@v4
