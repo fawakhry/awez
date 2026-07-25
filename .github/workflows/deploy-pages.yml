@@ -104,6 +104,12 @@ jobs:
       - name: Test web app manifest
         run: node tests/web-app-manifest.test.cjs
 
+      - name: Test offline app shell
+        run: |
+          node --check prototype/service-worker.js
+          node --check prototype/register-service-worker.js
+          node tests/offline-shell.test.cjs
+
   deploy:
     if: github.event_name != 'pull_request'
     needs: test
@@ -173,6 +179,9 @@ jobs:
 
       - name: Add checkout autofill enhancement
         run: sed -i 's#</body>#<script src="./checkout-autofill.js"></script></body>#' prototype/index.html
+
+      - name: Register offline app shell
+        run: sed -i 's#</body>#<script src="./register-service-worker.js"></script></body>#' prototype/index.html
 
       - name: Upload website
         uses: actions/upload-pages-artifact@v4
