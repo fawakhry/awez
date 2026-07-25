@@ -45,4 +45,11 @@ document.addEventListener('DOMContentLoaded', function () {
       announce(count ? 'تم العثور على ' + count + ' نتيجة' : 'لم يتم العثور على نتائج');
     }).observe(resultsList, { childList: true });
   }
+
+  if (!document.getElementById('aawzProductDeleteUndoScript')) {
+    var undoScript = document.createElement('script');
+    undoScript.id = 'aawzProductDeleteUndoScript';
+    undoScript.src = './product-delete-undo.js';
+    document.body.appendChild(undoScript);
+  }
 });
