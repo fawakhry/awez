@@ -1,8 +1,13 @@
-name: Deploy Aawz prototype to GitHub Pages
+name: Test and deploy Aawz prototype
 
 on:
   push:
     branches: ["main"]
+    paths:
+      - "prototype/**"
+      - "tests/**"
+      - ".github/workflows/deploy-pages.yml"
+  pull_request:
     paths:
       - "prototype/**"
       - "tests/**"
@@ -15,14 +20,11 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: "pages-${{ github.ref }}"
   cancel-in-progress: true
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -30,6 +32,17 @@ jobs:
 
       - name: Test Arabic search normalization
         run: node tests/search-normalization.test.cjs
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: test
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
