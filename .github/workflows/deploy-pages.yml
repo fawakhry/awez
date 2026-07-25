@@ -33,6 +33,11 @@ jobs:
       - name: Test Arabic search normalization
         run: node tests/search-normalization.test.cjs
 
+      - name: Test order review enhancement
+        run: |
+          node --check prototype/order-review.js
+          node tests/order-review.test.js
+
   deploy:
     if: github.event_name != 'pull_request'
     needs: test
@@ -52,6 +57,9 @@ jobs:
 
       - name: Add accessibility enhancements
         run: sed -i 's#</body>#<script src="./accessibility.js"></script></body>#' prototype/index.html
+
+      - name: Add order review enhancement
+        run: sed -i 's#</body>#<script src="./order-review.js"></script></body>#' prototype/index.html
 
       - name: Upload website
         uses: actions/upload-pages-artifact@v4
