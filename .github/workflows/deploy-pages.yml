@@ -43,6 +43,11 @@ jobs:
           node --check prototype/merchant-session.js
           node tests/merchant-session.test.cjs
 
+      - name: Test lazy panorama loading
+        run: |
+          node --check prototype/lazy-panorama.js
+          node tests/lazy-panorama.test.cjs
+
   deploy:
     if: github.event_name != 'pull_request'
     needs: test
@@ -57,6 +62,11 @@ jobs:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
+      - name: Remove blocking Pannellum assets
+        run: |
+          sed -i '/pannellum@2.5.6\/build\/pannellum.css/d' prototype/index.html
+          sed -i '/pannellum@2.5.6\/build\/pannellum.js/d' prototype/index.html
+
       - name: Add Arabic search normalization
         run: sed -i 's#</body>#<script src="./search-normalization.js"></script></body>#' prototype/index.html
 
@@ -68,6 +78,9 @@ jobs:
 
       - name: Add merchant session enhancement
         run: sed -i 's#</body>#<script src="./merchant-session.js"></script></body>#' prototype/index.html
+
+      - name: Add lazy panorama loading
+        run: sed -i 's#</body>#<script src="./lazy-panorama.js"></script></body>#' prototype/index.html
 
       - name: Upload website
         uses: actions/upload-pages-artifact@v4
