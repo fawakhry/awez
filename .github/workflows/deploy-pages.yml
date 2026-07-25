@@ -68,6 +68,11 @@ jobs:
           node --check prototype/search-keyboard.js
           node tests/search-keyboard.test.cjs
 
+      - name: Test view focus management
+        run: |
+          node --check prototype/view-focus.js
+          node tests/view-focus.test.cjs
+
   deploy:
     if: github.event_name != 'pull_request'
     needs: test
@@ -113,6 +118,9 @@ jobs:
 
       - name: Add keyboard search
         run: sed -i 's#</body>#<script src="./search-keyboard.js"></script></body>#' prototype/index.html
+
+      - name: Add view focus management
+        run: sed -i 's#</body>#<script src="./view-focus.js"></script></body>#' prototype/index.html
 
       - name: Upload website
         uses: actions/upload-pages-artifact@v4
