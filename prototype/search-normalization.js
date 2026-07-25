@@ -16,6 +16,12 @@
       .trim();
   }
 
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { normalizeArabic };
+  }
+
+  if (typeof window === 'undefined') return;
+
   window.normalizeArabic = normalizeArabic;
 
   const originalDoSearch = doSearch;
