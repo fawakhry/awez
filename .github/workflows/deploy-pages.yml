@@ -81,6 +81,11 @@ jobs:
           node --check prototype/merchant-order-filter.js
           node tests/merchant-order-filter.test.cjs
 
+      - name: Test cross-tab synchronization
+        run: |
+          node --check prototype/cross-tab-sync.js
+          node tests/cross-tab-sync.test.cjs
+
   deploy:
     if: github.event_name != 'pull_request'
     needs: test
@@ -135,6 +140,9 @@ jobs:
 
       - name: Add merchant order filtering
         run: sed -i 's#</body>#<script src="./merchant-order-filter.js"></script></body>#' prototype/index.html
+
+      - name: Add cross-tab synchronization
+        run: sed -i 's#</body>#<script src="./cross-tab-sync.js"></script></body>#' prototype/index.html
 
       - name: Upload website
         uses: actions/upload-pages-artifact@v4
