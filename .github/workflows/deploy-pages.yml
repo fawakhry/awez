@@ -110,6 +110,11 @@ jobs:
           node --check prototype/register-service-worker.js
           node tests/offline-shell.test.cjs
 
+      - name: Test service worker update notice
+        run: |
+          node --check prototype/service-worker-update.js
+          node tests/service-worker-update.test.cjs
+
   deploy:
     if: github.event_name != 'pull_request'
     needs: test
@@ -179,6 +184,9 @@ jobs:
 
       - name: Add checkout autofill enhancement
         run: sed -i 's#</body>#<script src="./checkout-autofill.js"></script></body>#' prototype/index.html
+
+      - name: Add service worker update notice
+        run: sed -i 's#</body>#<script src="./service-worker-update.js"></script></body>#' prototype/index.html
 
       - name: Register offline app shell
         run: sed -i 's#</body>#<script src="./register-service-worker.js"></script></body>#' prototype/index.html
