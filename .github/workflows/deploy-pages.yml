@@ -30,6 +30,9 @@ jobs:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
+      - name: Add accessibility enhancements
+        run: sed -i 's#</body>#<script src="./accessibility.js"></script></body>#' prototype/index.html
+
       - name: Upload website
         uses: actions/upload-pages-artifact@v4
         with:
