@@ -115,6 +115,11 @@ jobs:
           node --check prototype/service-worker-update.js
           node tests/service-worker-update.test.cjs
 
+      - name: Test product delete undo
+        run: |
+          node --check prototype/product-delete-undo.js
+          node tests/product-delete-undo.test.cjs
+
   deploy:
     if: github.event_name != 'pull_request'
     needs: test
