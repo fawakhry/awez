@@ -73,6 +73,9 @@ jobs:
           node --check prototype/view-focus.js
           node tests/view-focus.test.cjs
 
+      - name: Test reduced motion support
+        run: node tests/reduced-motion.test.cjs
+
   deploy:
     if: github.event_name != 'pull_request'
     needs: test
@@ -86,6 +89,9 @@ jobs:
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
+
+      - name: Add reduced motion stylesheet
+        run: sed -i 's#</head>#<link rel="stylesheet" href="./reduced-motion.css"></head>#' prototype/index.html
 
       - name: Remove blocking Pannellum assets
         run: |
