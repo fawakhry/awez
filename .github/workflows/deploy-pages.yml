@@ -63,6 +63,11 @@ jobs:
           node --check prototype/orders-csv-export.js
           node tests/orders-csv-export.test.cjs
 
+      - name: Test keyboard search
+        run: |
+          node --check prototype/search-keyboard.js
+          node tests/search-keyboard.test.cjs
+
   deploy:
     if: github.event_name != 'pull_request'
     needs: test
@@ -105,6 +110,9 @@ jobs:
 
       - name: Add orders CSV export
         run: sed -i 's#</body>#<script src="./orders-csv-export.js"></script></body>#' prototype/index.html
+
+      - name: Add keyboard search
+        run: sed -i 's#</body>#<script src="./search-keyboard.js"></script></body>#' prototype/index.html
 
       - name: Upload website
         uses: actions/upload-pages-artifact@v4
