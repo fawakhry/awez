@@ -101,6 +101,9 @@ jobs:
           node --check prototype/checkout-autofill.js
           node tests/checkout-autofill.test.cjs
 
+      - name: Test web app manifest
+        run: node tests/web-app-manifest.test.cjs
+
   deploy:
     if: github.event_name != 'pull_request'
     needs: test
@@ -114,6 +117,9 @@ jobs:
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
+
+      - name: Add web app manifest
+        run: sed -i 's#</head>#<link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon-192.svg" type="image/svg+xml"></head>#' prototype/index.html
 
       - name: Add reduced motion stylesheet
         run: sed -i 's#</head>#<link rel="stylesheet" href="./reduced-motion.css"></head>#' prototype/index.html
