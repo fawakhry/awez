@@ -76,6 +76,11 @@ jobs:
       - name: Test reduced motion support
         run: node tests/reduced-motion.test.cjs
 
+      - name: Test merchant order filtering
+        run: |
+          node --check prototype/merchant-order-filter.js
+          node tests/merchant-order-filter.test.cjs
+
   deploy:
     if: github.event_name != 'pull_request'
     needs: test
@@ -127,6 +132,9 @@ jobs:
 
       - name: Add view focus management
         run: sed -i 's#</body>#<script src="./view-focus.js"></script></body>#' prototype/index.html
+
+      - name: Add merchant order filtering
+        run: sed -i 's#</body>#<script src="./merchant-order-filter.js"></script></body>#' prototype/index.html
 
       - name: Upload website
         uses: actions/upload-pages-artifact@v4
