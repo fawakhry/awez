@@ -38,6 +38,11 @@ jobs:
           node --check prototype/order-review.js
           node tests/order-review.test.js
 
+      - name: Test merchant session enhancement
+        run: |
+          node --check prototype/merchant-session.js
+          node tests/merchant-session.test.cjs
+
   deploy:
     if: github.event_name != 'pull_request'
     needs: test
@@ -60,6 +65,9 @@ jobs:
 
       - name: Add order review enhancement
         run: sed -i 's#</body>#<script src="./order-review.js"></script></body>#' prototype/index.html
+
+      - name: Add merchant session enhancement
+        run: sed -i 's#</body>#<script src="./merchant-session.js"></script></body>#' prototype/index.html
 
       - name: Upload website
         uses: actions/upload-pages-artifact@v4
