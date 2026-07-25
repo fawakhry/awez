@@ -91,6 +91,11 @@ jobs:
           node --check prototype/network-status.js
           node tests/network-status.test.cjs
 
+      - name: Test checkout draft persistence
+        run: |
+          node --check prototype/checkout-draft.js
+          node tests/checkout-draft.test.cjs
+
   deploy:
     if: github.event_name != 'pull_request'
     needs: test
@@ -151,6 +156,9 @@ jobs:
 
       - name: Add network status enhancement
         run: sed -i 's#</body>#<script src="./network-status.js"></script></body>#' prototype/index.html
+
+      - name: Add checkout draft persistence
+        run: sed -i 's#</body>#<script src="./checkout-draft.js"></script></body>#' prototype/index.html
 
       - name: Upload website
         uses: actions/upload-pages-artifact@v4
