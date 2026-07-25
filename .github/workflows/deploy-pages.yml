@@ -120,6 +120,11 @@ jobs:
           node --check prototype/product-delete-undo.js
           node tests/product-delete-undo.test.cjs
 
+      - name: Test low stock alert
+        run: |
+          node --check prototype/low-stock-alert.js
+          node tests/low-stock-alert.test.cjs
+
   deploy:
     if: github.event_name != 'pull_request'
     needs: test
@@ -192,6 +197,9 @@ jobs:
 
       - name: Add service worker update notice
         run: sed -i 's#</body>#<script src="./service-worker-update.js"></script></body>#' prototype/index.html
+
+      - name: Add low stock alert
+        run: sed -i 's#</body>#<script src="./low-stock-alert.js"></script></body>#' prototype/index.html
 
       - name: Register offline app shell
         run: sed -i 's#</body>#<script src="./register-service-worker.js"></script></body>#' prototype/index.html
