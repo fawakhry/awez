@@ -5,6 +5,7 @@ on:
     branches: ["main"]
     paths:
       - "prototype/**"
+      - "tests/**"
       - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
 
@@ -26,6 +27,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Test Arabic search normalization
+        run: node tests/search-normalization.test.cjs
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
