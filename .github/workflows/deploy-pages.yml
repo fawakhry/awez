@@ -58,6 +58,11 @@ jobs:
           node --check prototype/checkout-validation.js
           node tests/checkout-validation.test.cjs
 
+      - name: Test orders CSV export
+        run: |
+          node --check prototype/orders-csv-export.js
+          node tests/orders-csv-export.test.cjs
+
   deploy:
     if: github.event_name != 'pull_request'
     needs: test
@@ -97,6 +102,9 @@ jobs:
 
       - name: Add checkout validation
         run: sed -i 's#</body>#<script src="./checkout-validation.js"></script></body>#' prototype/index.html
+
+      - name: Add orders CSV export
+        run: sed -i 's#</body>#<script src="./orders-csv-export.js"></script></body>#' prototype/index.html
 
       - name: Upload website
         uses: actions/upload-pages-artifact@v4
