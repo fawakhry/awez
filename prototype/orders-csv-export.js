@@ -10,9 +10,24 @@
   function csvCell(value) { return `"${safeText(value).replace(/"/g, '""')}"`; }
   function orderProducts(order) { return (order.items || []).map((item) => `${item.name || ''} × ${Number(item.qty) || 0}`).join('، '); }
 
+  function formatOrderDate(value) {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    try {
+      return new Intl.DateTimeFormat('ar-EG', {
+        dateStyle: 'short',
+        timeStyle: 'short',
+        timeZone: 'Africa/Cairo'
+      }).format(date);
+    } catch (_) {
+      return date.toISOString();
+    }
+  }
+
   function buildOrdersCsv(orderList) {
     const headers = ['رقم الطلب','التاريخ','الحالة','اسم العميل','الهاتف','العنوان','طريقة الدفع','المنتجات','الإجمالي','ملاحظات'];
-    const rows = (Array.isArray(orderList) ? orderList : []).map((order) => [order.id,order.createdAt ? new Date(order.createdAt).toISOString() : '',STATUS_LABELS[order.status] || order.status || '',order.customer?.name,order.customer?.phone,order.customer?.address,order.customer?.payment === 'card' ? 'بطاقة عند الاستلام' : 'كاش عند الاستلام',orderProducts(order),Number(order.total) || 0,order.customer?.notes]);
+    const rows = (Array.isArray(orderList) ? orderList : []).map((order) => [order.id,formatOrderDate(order.createdAt),STATUS_LABELS[order.status] || order.status || '',order.customer?.name,order.customer?.phone,order.customer?.address,order.customer?.payment === 'card' ? 'بطاقة عند الاستلام' : 'كاش عند الاستلام',orderProducts(order),Number(order.total) || 0,order.customer?.notes]);
     return [headers, ...rows].map((row) => row.map(csvCell).join(',')).join('\r\n');
   }
 
@@ -53,7 +68,7 @@
   function addOrdersExportButton() { addExportButton('tab-merchantOrders', '.section-head', 'data-orders-export', 'تصدير الطلبات CSV', () => downloadOrdersCsv(orders)); }
   function addProductsExportButton() { addExportButton('tab-products', '.section-head', 'data-products-export', 'تصدير المخزون CSV', () => downloadProductsCsv(products)); }
 
-  if (typeof module !== 'undefined' && module.exports) module.exports = { safeText, csvCell, buildOrdersCsv, buildProductsCsv, orderProducts };
+  if (typeof module !== 'undefined' && module.exports) module.exports = { safeText, csvCell, buildOrdersCsv, buildProductsCsv, orderProducts, formatOrderDate };
   if (typeof window === 'undefined') return;
   window.downloadOrdersCsv = downloadOrdersCsv; window.downloadProductsCsv = downloadProductsCsv;
   const originalRenderMerchantOrders = renderMerchantOrders;
