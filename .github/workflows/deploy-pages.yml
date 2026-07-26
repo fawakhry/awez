@@ -141,6 +141,11 @@ jobs:
           node --check prototype/active-navigation.js
           node tests/active-navigation.test.cjs
 
+      - name: Test customer order cancellation
+        run: |
+          node --check prototype/customer-order-cancel.js
+          node tests/customer-order-cancel.test.cjs
+
   deploy:
     if: github.event_name != 'pull_request'
     needs: test
@@ -229,6 +234,9 @@ jobs:
 
       - name: Add active navigation state
         run: sed -i 's#</body>#<script src="./active-navigation.js"></script></body>#' prototype/index.html
+
+      - name: Add customer order cancellation
+        run: sed -i 's#</body>#<script src="./customer-order-cancel.js"></script></body>#' prototype/index.html
 
       - name: Register offline app shell
         run: sed -i 's#</body>#<script src="./register-service-worker.js"></script></body>#' prototype/index.html
