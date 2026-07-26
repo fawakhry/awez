@@ -1,0 +1,27 @@
+name: Test custom 404 page
+
+on:
+  pull_request:
+    paths:
+      - "prototype/404.html"
+      - "tests/custom-404.test.cjs"
+      - ".github/workflows/test-custom-404.yml"
+  push:
+    branches: ["main"]
+    paths:
+      - "prototype/404.html"
+      - "tests/custom-404.test.cjs"
+      - ".github/workflows/test-custom-404.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Test custom 404 page
+        run: node tests/custom-404.test.cjs
