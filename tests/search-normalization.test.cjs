@@ -15,3 +15,4 @@ for (const [input, expected] of cases) {
 }
 
 console.log(`Arabic search normalization tests passed: ${cases.length}`);
+require('./store-scoped-products.test.cjs');
