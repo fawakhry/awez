@@ -59,4 +59,11 @@ document.addEventListener('DOMContentLoaded', function () {
     undoScript.src = './product-delete-undo.js';
     document.body.appendChild(undoScript);
   }
+
+  if (!document.getElementById('aawzProductDialogAccessibilityScript')) {
+    var dialogScript = document.createElement('script');
+    dialogScript.id = 'aawzProductDialogAccessibilityScript';
+    dialogScript.src = './product-dialog-accessibility.js';
+    document.body.appendChild(dialogScript);
+  }
 });

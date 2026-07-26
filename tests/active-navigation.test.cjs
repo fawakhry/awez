@@ -60,3 +60,5 @@ function makeDocument(activeId = "home") {
 
   console.log("active-navigation tests passed");
 })();
+
+require("./product-dialog-accessibility.test.cjs");
