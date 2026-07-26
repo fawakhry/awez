@@ -34,6 +34,11 @@ jobs:
       - name: Test Arabic search normalization
         run: node tests/search-normalization.test.cjs
 
+      - name: Test search landmark
+        run: |
+          node --check prototype/search-landmark.js
+          node tests/search-landmark.test.cjs
+
       - name: Test order review enhancement
         run: |
           node --check prototype/order-review.js
@@ -167,6 +172,9 @@ jobs:
 
       - name: Add Arabic search normalization
         run: sed -i 's#</body>#<script src="./search-normalization.js"></script></body>#' prototype/index.html
+
+      - name: Add search landmark
+        run: sed -i 's#</body>#<script src="./search-landmark.js"></script></body>#' prototype/index.html
 
       - name: Add accessibility enhancements
         run: sed -i 's#</body>#<script src="./accessibility.js"></script></body>#' prototype/index.html
