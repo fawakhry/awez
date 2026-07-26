@@ -130,6 +130,11 @@ jobs:
           node --check prototype/skip-link.js
           node tests/skip-link.test.cjs
 
+      - name: Test active navigation state
+        run: |
+          node --check prototype/active-navigation.js
+          node tests/active-navigation.test.cjs
+
   deploy:
     if: github.event_name != 'pull_request'
     needs: test
@@ -208,6 +213,9 @@ jobs:
 
       - name: Add skip link
         run: sed -i 's#</body>#<script src="./skip-link.js"></script></body>#' prototype/index.html
+
+      - name: Add active navigation state
+        run: sed -i 's#</body>#<script src="./active-navigation.js"></script></body>#' prototype/index.html
 
       - name: Register offline app shell
         run: sed -i 's#</body>#<script src="./register-service-worker.js"></script></body>#' prototype/index.html
