@@ -12,16 +12,27 @@ const stores = [
 
 const migrated = migrateProducts([
   { id: 'rice', name: 'أرز مصري', category: 'سوبر ماركت' },
+  { id: 'oil', name: 'زيت ذرة', category: 'سوبر ماركت' },
   { id: 'shirt', name: 'قميص', category: 'ملابس', storeId: 'trend' },
 ], 'kheir');
 
 assert.equal(migrated[0].storeId, 'kheir', 'البيانات القديمة تُربط بالمتجر الافتراضي');
-assert.equal(migrated[1].storeId, 'trend', 'لا يتم تغيير الربط الموجود');
+assert.equal(migrated[2].storeId, 'trend', 'لا يتم تغيير الربط الموجود');
 assert.equal(productsForStore(migrated, 'trend').length, 1, 'كل متجر يعرض منتجاته فقط');
 assert.deepEqual(
   filterStoresByQuery(stores, migrated, 'أرز').map((store) => store.id),
   ['kheir'],
   'البحث باسم منتج لا يُظهر متجرًا غير مرتبط به'
+);
+assert.deepEqual(
+  filterStoresByQuery(stores, migrated, 'زيت ورز').map((store) => store.id),
+  ['kheir'],
+  'الطلب الطبيعي متعدد الكلمات يطابق منتجات المتجر حتى مع واو العطف'
+);
+assert.deepEqual(
+  filterStoresByQuery(stores, migrated, 'قميص وزيت').map((store) => store.id),
+  [],
+  'لا يتم تجميع منتجات من متجرين مختلفين لإنتاج نتيجة خاطئة'
 );
 assert.deepEqual(
   filterStoresByQuery(stores, migrated, 'ملابس').map((store) => store.id),
