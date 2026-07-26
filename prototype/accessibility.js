@@ -46,6 +46,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }).observe(resultsList, { childList: true });
   }
 
+  if (!document.getElementById('aawzStoreScopedProductsScript')) {
+    var scopedProductsScript = document.createElement('script');
+    scopedProductsScript.id = 'aawzStoreScopedProductsScript';
+    scopedProductsScript.src = './store-scoped-products.js';
+    document.body.appendChild(scopedProductsScript);
+  }
+
   if (!document.getElementById('aawzProductDeleteUndoScript')) {
     var undoScript = document.createElement('script');
     undoScript.id = 'aawzProductDeleteUndoScript';
