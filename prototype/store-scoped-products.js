@@ -1,9 +1,22 @@
 (function () {
+  const ARABIC_DIACRITICS = /[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED]/g;
+
   function normalize(value) {
     if (typeof window !== 'undefined' && typeof window.normalizeArabic === 'function') {
       return window.normalizeArabic(value);
     }
-    return String(value ?? '').toLowerCase().trim();
+    return String(value ?? '')
+      .normalize('NFKC')
+      .toLowerCase()
+      .replace(ARABIC_DIACRITICS, '')
+      .replace(/ـ/g, '')
+      .replace(/[أإآٱ]/g, 'ا')
+      .replace(/ى/g, 'ي')
+      .replace(/ؤ/g, 'و')
+      .replace(/ئ/g, 'ي')
+      .replace(/ة/g, 'ه')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   function migrateProducts(items, defaultStoreId) {
@@ -14,17 +27,25 @@
     return items.filter((item) => item.storeId === storeId);
   }
 
+  function termMatches(text, term) {
+    if (text.includes(term)) return true;
+    return term.startsWith('و') && term.length > 2 && text.includes(term.slice(1));
+  }
+
   function filterStoresByQuery(storeList, productList, query) {
-    const q = normalize(query);
-    if (!q) return storeList.slice();
+    const terms = normalize(query).split(' ').filter(Boolean);
+    if (!terms.length) return storeList.slice();
 
     return storeList.filter((store) => {
-      const storeText = normalize(`${store.name} ${store.category} ${store.address}`);
-      const hasMatchingProduct = productList.some((product) =>
-        product.storeId === store.id &&
-        normalize(`${product.name} ${product.category}`).includes(q)
-      );
-      return storeText.includes(q) || hasMatchingProduct;
+      const storeProducts = productsForStore(productList, store.id);
+      const searchableText = normalize([
+        store.name,
+        store.category,
+        store.address,
+        ...storeProducts.flatMap((product) => [product.name, product.category]),
+      ].join(' '));
+
+      return terms.every((term) => termMatches(searchableText, term));
     });
   }
 
