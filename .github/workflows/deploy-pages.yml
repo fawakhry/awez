@@ -125,6 +125,11 @@ jobs:
           node --check prototype/low-stock-alert.js
           node tests/low-stock-alert.test.cjs
 
+      - name: Test skip link
+        run: |
+          node --check prototype/skip-link.js
+          node tests/skip-link.test.cjs
+
   deploy:
     if: github.event_name != 'pull_request'
     needs: test
@@ -200,6 +205,9 @@ jobs:
 
       - name: Add low stock alert
         run: sed -i 's#</body>#<script src="./low-stock-alert.js"></script></body>#' prototype/index.html
+
+      - name: Add skip link
+        run: sed -i 's#</body>#<script src="./skip-link.js"></script></body>#' prototype/index.html
 
       - name: Register offline app shell
         run: sed -i 's#</body>#<script src="./register-service-worker.js"></script></body>#' prototype/index.html
