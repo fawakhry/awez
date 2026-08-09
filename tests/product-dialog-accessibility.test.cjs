@@ -67,3 +67,4 @@ assert.equal(closed, 1, "Escape closes the dialog");
 assert.equal(documentRef.activeElement, opener, "closing restores focus to the opener");
 
 console.log("product-dialog-accessibility tests passed");
+require('./low-stock-dashboard.test.cjs');
