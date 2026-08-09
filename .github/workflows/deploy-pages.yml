@@ -240,6 +240,9 @@ jobs:
       - name: Add service worker update notice
         run: sed -i 's#</body>#<script src="./service-worker-update.js"></script></body>#' prototype/index.html
 
+      - name: Add product delete undo
+        run: sed -i 's#</body>#<script src="./product-delete-undo.js"></script></body>#' prototype/index.html
+
       - name: Add low stock alert
         run: sed -i 's#</body>#<script src="./low-stock-alert.js"></script></body>#' prototype/index.html
 
