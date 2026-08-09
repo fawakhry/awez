@@ -3,6 +3,26 @@
   if (typeof module === 'object' && module.exports) module.exports = api;
   if (root) root.AawzCustomerOrderCancel = api;
 })(typeof window !== 'undefined' ? window : globalThis, function () {
+  function normalizeOrderId(value) {
+    const id = String(value == null ? '' : value).trim();
+    return /^AWZ-[A-Za-z0-9-]+$/.test(id) ? id : '';
+  }
+
+  async function copyOrderId(orderId, navigatorRef) {
+    const id = normalizeOrderId(orderId);
+    if (!id) return { ok: false, reason: 'invalid-order-id' };
+    const clipboard = navigatorRef && navigatorRef.clipboard;
+    if (!clipboard || typeof clipboard.writeText !== 'function') {
+      return { ok: false, reason: 'clipboard-unavailable' };
+    }
+    try {
+      await clipboard.writeText(id);
+      return { ok: true, orderId: id };
+    } catch (error) {
+      return { ok: false, reason: 'clipboard-denied' };
+    }
+  }
+
   function cancelPendingOrder(orderId, orders, products) {
     const order = orders.find((item) => item.id === orderId);
     if (!order) return { ok: false, reason: 'not-found' };
@@ -22,7 +42,24 @@
     const cards = container.querySelectorAll('.order-card');
     cards.forEach((card, index) => {
       const order = orders[index];
-      if (!order || order.status !== 'pending' || card.querySelector('[data-cancel-order]')) return;
+      if (!order) return;
+
+      const orderId = normalizeOrderId(order.id);
+      if (orderId && !card.querySelector('[data-copy-order-id]')) {
+        const copyButton = document.createElement('button');
+        copyButton.type = 'button';
+        copyButton.className = 'ghost';
+        copyButton.dataset.copyOrderId = orderId;
+        copyButton.textContent = 'نسخ رقم الطلب';
+        copyButton.setAttribute('aria-label', `نسخ رقم الطلب ${orderId}`);
+        copyButton.addEventListener('click', async () => {
+          const result = await copyOrderId(orderId, window.navigator);
+          toast(result.ok ? `تم نسخ رقم الطلب ${orderId}` : 'تعذر نسخ رقم الطلب');
+        });
+        card.appendChild(copyButton);
+      }
+
+      if (order.status !== 'pending' || card.querySelector('[data-cancel-order]')) return;
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'danger';
@@ -54,5 +91,5 @@
   }
 
   if (typeof document !== 'undefined') install();
-  return { cancelPendingOrder, addCancelButtons, install };
+  return { normalizeOrderId, copyOrderId, cancelPendingOrder, addCancelButtons, install };
 });
