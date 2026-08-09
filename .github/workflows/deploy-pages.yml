@@ -93,6 +93,11 @@ jobs:
           node --check prototype/merchant-order-filter.js
           node tests/merchant-order-filter.test.cjs
 
+      - name: Test merchant daily summary
+        run: |
+          node --check prototype/merchant-daily-summary.js
+          node tests/merchant-daily-summary.test.cjs
+
       - name: Test cross-tab synchronization
         run: |
           node --check prototype/cross-tab-sync.js
@@ -224,6 +229,9 @@ jobs:
 
       - name: Add merchant order filtering
         run: sed -i 's#</body>#<script src="./merchant-order-filter.js"></script></body>#' prototype/index.html
+
+      - name: Add merchant daily summary
+        run: sed -i 's#</body>#<script src="./merchant-daily-summary.js"></script></body>#' prototype/index.html
 
       - name: Add cross-tab synchronization
         run: sed -i 's#</body>#<script src="./cross-tab-sync.js"></script></body>#' prototype/index.html
