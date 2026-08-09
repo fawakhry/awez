@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aawz-shell-v2';
+const CACHE_NAME = 'aawz-shell-v3';
 const APP_SHELL = [
   './',
   './index.html',
@@ -6,6 +6,7 @@ const APP_SHELL = [
   './icon-192.svg',
   './icon-512.svg',
   './reduced-motion.css',
+  './focus-visible.css',
   './search-normalization.js',
   './search-landmark.js',
   './accessibility.js',

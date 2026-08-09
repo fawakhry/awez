@@ -85,6 +85,9 @@ jobs:
       - name: Test reduced motion support
         run: node tests/reduced-motion.test.cjs
 
+      - name: Test visible keyboard focus
+        run: node tests/focus-visible.test.cjs
+
       - name: Test merchant order filtering
         run: |
           node --check prototype/merchant-order-filter.js
@@ -177,6 +180,9 @@ jobs:
 
       - name: Add reduced motion stylesheet
         run: sed -i 's#</head>#<link rel="stylesheet" href="./reduced-motion.css"></head>#' prototype/index.html
+
+      - name: Add visible keyboard focus stylesheet
+        run: sed -i 's#</head>#<link rel="stylesheet" href="./focus-visible.css"></head>#' prototype/index.html
 
       - name: Remove blocking Pannellum assets
         run: |
