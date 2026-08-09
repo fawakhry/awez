@@ -1,5 +1,8 @@
 const assert = require('node:assert/strict');
-const { cancelPendingOrder } = require('../prototype/customer-order-cancel.js');
+const { normalizeOrderId, copyOrderId, cancelPendingOrder } = require('../prototype/customer-order-cancel.js');
+
+assert.equal(normalizeOrderId(' AWZ-1234567 '), 'AWZ-1234567');
+assert.equal(normalizeOrderId('1234567'), '');
 
 const products = [
   { id: 'oil', stock: 7 },
@@ -30,4 +33,25 @@ const deliveredOrders = [{ id: 'AWZ-200', status: 'delivered', items: [{ id: 'oi
 assert.deepEqual(cancelPendingOrder('AWZ-200', deliveredOrders, products), { ok: false, reason: 'not-pending' });
 assert.deepEqual(cancelPendingOrder('AWZ-404', deliveredOrders, products), { ok: false, reason: 'not-found' });
 
-console.log('customer order cancellation tests passed');
+(async () => {
+  let copied = '';
+  assert.deepEqual(
+    await copyOrderId('AWZ-200', { clipboard: { async writeText(value) { copied = value; } } }),
+    { ok: true, orderId: 'AWZ-200' }
+  );
+  assert.equal(copied, 'AWZ-200');
+  assert.deepEqual(
+    await copyOrderId('bad', { clipboard: { writeText() {} } }),
+    { ok: false, reason: 'invalid-order-id' }
+  );
+  assert.deepEqual(
+    await copyOrderId('AWZ-200', {}),
+    { ok: false, reason: 'clipboard-unavailable' }
+  );
+  assert.deepEqual(
+    await copyOrderId('AWZ-200', { clipboard: { async writeText() { throw new Error('denied'); } } }),
+    { ok: false, reason: 'clipboard-denied' }
+  );
+
+  console.log('customer order cancellation and copy tests passed');
+})();
