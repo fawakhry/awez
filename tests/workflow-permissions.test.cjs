@@ -23,3 +23,4 @@ assert.match(
 
 console.log('Workflow permissions are scoped to least privilege.');
 require('./check-prototype-syntax.test.cjs');
+require('./deployment-runbook.test.cjs');
