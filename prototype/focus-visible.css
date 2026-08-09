@@ -1,0 +1,4 @@
+:where(button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 3px solid var(--brand2, #ffca55);
+  outline-offset: 3px;
+}
