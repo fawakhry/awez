@@ -15,6 +15,10 @@ assert.equal(isStylesheetReady({ sheet: null }), false);
 assert.equal(isStylesheetReady({ sheet: {} }), true);
 assert.match(PANNELLUM_CSS, /^https:\/\//);
 assert.match(PANNELLUM_JS, /^https:\/\//);
+assert.match(PANNELLUM_CSS, /pannellum@2\.5\.7\/build\/pannellum\.css$/);
+assert.match(PANNELLUM_JS, /pannellum@2\.5\.7\/build\/pannellum\.js$/);
+assert.doesNotMatch(PANNELLUM_CSS, /pannellum@2\.5\.6/);
+assert.doesNotMatch(PANNELLUM_JS, /pannellum@2\.5\.6/);
 
 const lazyPanoramaSource = fs.readFileSync(
   path.join(__dirname, '..', 'prototype', 'lazy-panorama.js'),
