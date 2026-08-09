@@ -22,4 +22,18 @@ assert.match(source, /تراجع/, 'the merchant must receive an explicit undo a
 assert.match(source, /aria-live', 'polite'/, 'undo notice must be announced accessibly');
 assert.match(source, /8000/, 'undo action must remain available for a limited period');
 
+const workflow = fs.readFileSync(path.join(__dirname, '../.github/workflows/deploy-pages.yml'), 'utf8');
+assert.match(
+  workflow,
+  /<script src="\.\/product-delete-undo\.js"><\/script>/,
+  'GitHub Pages build must load the product delete undo enhancement'
+);
+
+const serviceWorker = fs.readFileSync(path.join(__dirname, '../prototype/service-worker.js'), 'utf8');
+assert.match(
+  serviceWorker,
+  /'\.\/product-delete-undo\.js'/,
+  'offline app shell must precache the product delete undo enhancement'
+);
+
 console.log('Product delete undo tests passed');
