@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aawz-shell-v1';
+const CACHE_NAME = 'aawz-shell-v2';
 const APP_SHELL = [
   './',
   './index.html',
@@ -7,6 +7,7 @@ const APP_SHELL = [
   './icon-512.svg',
   './reduced-motion.css',
   './search-normalization.js',
+  './search-landmark.js',
   './accessibility.js',
   './order-review.js',
   './duplicate-order-guard.js',
@@ -21,6 +22,11 @@ const APP_SHELL = [
   './network-status.js',
   './checkout-draft.js',
   './checkout-autofill.js',
+  './service-worker-update.js',
+  './low-stock-alert.js',
+  './skip-link.js',
+  './active-navigation.js',
+  './customer-order-cancel.js',
   './register-service-worker.js'
 ];
 
