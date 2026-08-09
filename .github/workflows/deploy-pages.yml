@@ -31,6 +31,9 @@ jobs:
       - name: Test workflow permissions
         run: node tests/workflow-permissions.test.cjs
 
+      - name: Test accessibility search status
+        run: node tests/accessibility-search-status.test.cjs
+
       - name: Test Arabic search normalization
         run: node tests/search-normalization.test.cjs
 
