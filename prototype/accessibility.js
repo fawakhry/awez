@@ -66,4 +66,11 @@ document.addEventListener('DOMContentLoaded', function () {
     dialogScript.src = './product-dialog-accessibility.js';
     document.body.appendChild(dialogScript);
   }
+
+  if (!document.getElementById('aawzLowStockDashboardScript')) {
+    var lowStockScript = document.createElement('script');
+    lowStockScript.id = 'aawzLowStockDashboardScript';
+    lowStockScript.src = './low-stock-dashboard.js';
+    document.body.appendChild(lowStockScript);
+  }
 });
