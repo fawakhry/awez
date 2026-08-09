@@ -7,12 +7,29 @@
     return !(scope && scope.pannellum);
   }
 
+  function isStylesheetReady(link) {
+    return Boolean(link && link.sheet);
+  }
+
   function appendStylesheet(doc, href) {
-    if (doc.querySelector(`link[href="${href}"]`)) return;
-    const link = doc.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = href;
-    doc.head.appendChild(link);
+    return new Promise((resolve, reject) => {
+      const existing = doc.querySelector(`link[href="${href}"]`);
+      if (existing) {
+        if (isStylesheetReady(existing)) resolve();
+        else {
+          existing.addEventListener('load', resolve, { once: true });
+          existing.addEventListener('error', reject, { once: true });
+        }
+        return;
+      }
+
+      const link = doc.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = href;
+      link.onload = resolve;
+      link.onerror = reject;
+      doc.head.appendChild(link);
+    });
   }
 
   function appendScript(doc, src) {
@@ -40,8 +57,10 @@
     if (!needsPanoramaLibrary(window)) return Promise.resolve();
     if (libraryPromise) return libraryPromise;
 
-    appendStylesheet(document, PANNELLUM_CSS);
-    libraryPromise = appendScript(document, PANNELLUM_JS).catch((error) => {
+    libraryPromise = Promise.all([
+      appendStylesheet(document, PANNELLUM_CSS),
+      appendScript(document, PANNELLUM_JS)
+    ]).then(() => undefined).catch((error) => {
       libraryPromise = null;
       throw error;
     });
@@ -49,7 +68,12 @@
   }
 
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { PANNELLUM_CSS, PANNELLUM_JS, needsPanoramaLibrary };
+    module.exports = {
+      PANNELLUM_CSS,
+      PANNELLUM_JS,
+      needsPanoramaLibrary,
+      isStylesheetReady
+    };
   }
 
   if (typeof window === 'undefined') return;
