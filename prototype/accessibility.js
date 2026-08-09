@@ -40,10 +40,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
   var resultsList = document.getElementById('resultsList');
   if (resultsList) {
+    var resultsAnnouncementTimer = null;
     new MutationObserver(function () {
-      var count = resultsList.querySelectorAll('.store-card').length;
-      announce(count ? 'تم العثور على ' + count + ' نتيجة' : 'لم يتم العثور على نتائج');
-    }).observe(resultsList, { childList: true });
+      clearTimeout(resultsAnnouncementTimer);
+      resultsAnnouncementTimer = setTimeout(function () {
+        var count = resultsList.querySelectorAll('.store-card').length;
+        announce(count ? 'تم العثور على ' + count + ' نتيجة' : 'لم يتم العثور على نتائج');
+      }, 120);
+    }).observe(resultsList, { childList: true, subtree: true });
   }
 
   if (!document.getElementById('aawzStoreScopedProductsScript')) {
