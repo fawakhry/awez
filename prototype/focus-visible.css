@@ -2,3 +2,7 @@
   outline: 3px solid var(--brand2, #ffca55);
   outline-offset: 3px;
 }
+
+:where(.topbar, .footer-nav) :where(.nav-btn, .primary)[aria-current="page"] {
+  box-shadow: 0 0 0 2px var(--brand2, #ffca55);
+}
