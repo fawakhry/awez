@@ -37,7 +37,7 @@
     if (!terms.length) return storeList.slice();
 
     return storeList.filter((store) => {
-      const storeProducts = productsForStore(productList, store.id);
+      const storeProducts = productsForStore(productList, store.id).filter((product) => product.active);
       const searchableText = normalize([
         store.name,
         store.category,
