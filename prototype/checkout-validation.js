@@ -20,8 +20,31 @@
     return { valid: Object.keys(errors).length === 0, errors: errors, values: { name: name, phone: phone, address: address } };
   }
 
+  function validateCartAvailability(lines) {
+    if (!Array.isArray(lines) || !lines.length) {
+      return { valid: false, issues: [{ reason: 'empty-cart' }] };
+    }
+
+    var issues = [];
+    lines.forEach(function (line) {
+      var product = line && (line.product || line);
+      var qty = Number(line && line.qty) || 0;
+      var stock = Number(product && product.stock);
+
+      if (!product || qty <= 0) {
+        issues.push({ reason: 'invalid-item', product: product, qty: qty });
+      } else if (product.active === false) {
+        issues.push({ reason: 'inactive', product: product, qty: qty, stock: stock });
+      } else if (!Number.isFinite(stock) || stock < qty) {
+        issues.push({ reason: 'insufficient-stock', product: product, qty: qty, stock: Number.isFinite(stock) ? stock : 0 });
+      }
+    });
+
+    return { valid: issues.length === 0, issues: issues };
+  }
+
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { normalizeSpaces: normalizeSpaces, normalizeEgyptianPhone: normalizeEgyptianPhone, validateCheckoutData: validateCheckoutData };
+    module.exports = { normalizeSpaces: normalizeSpaces, normalizeEgyptianPhone: normalizeEgyptianPhone, validateCheckoutData: validateCheckoutData, validateCartAvailability: validateCartAvailability };
   }
 
   if (typeof document === 'undefined') return;
@@ -29,6 +52,8 @@
   function removeErrors(form) {
     var summary = form.querySelector('[data-checkout-errors]');
     if (summary) summary.remove();
+    var stockError = form.querySelector('[data-checkout-stock-error]');
+    if (stockError) stockError.remove();
     form.querySelectorAll('[data-field-error]').forEach(function (node) { node.remove(); });
     form.querySelectorAll('[aria-invalid="true"]').forEach(function (field) {
       field.removeAttribute('aria-invalid');
@@ -72,6 +97,26 @@
     if (first) setTimeout(function () { first.focus(); }, 150);
   }
 
+  function showAvailabilityError(form, availability) {
+    removeErrors(form);
+    var issue = availability.issues[0] || { reason: 'empty-cart' };
+    var productName = issue.product && issue.product.name ? issue.product.name : 'المنتج';
+    var message = 'السلة فاضية. ارجع للسلة وأضف منتجات قبل إرسال الطلب.';
+    if (issue.reason === 'inactive') message = productName + ' لم يعد متاحًا حاليًا. ارجع للسلة واختر بديلًا.';
+    if (issue.reason === 'insufficient-stock') message = 'الكمية المتاحة من ' + productName + ' هي ' + issue.stock + ' فقط. ارجع للسلة وعدّل الكمية.';
+    if (issue.reason === 'invalid-item') message = 'فيه منتج غير صالح في السلة. ارجع للسلة وراجع الكميات.';
+
+    var notice = document.createElement('div');
+    notice.className = 'notice';
+    notice.setAttribute('role', 'alert');
+    notice.setAttribute('tabindex', '-1');
+    notice.setAttribute('data-checkout-stock-error', '');
+    notice.style.marginBottom = '14px';
+    notice.textContent = message;
+    form.prepend(notice);
+    notice.focus();
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     var form = document.getElementById('checkoutForm');
     if (!form) return;
@@ -95,6 +140,16 @@
         showErrors(form, result);
         return;
       }
+
+      var lines = typeof window.cartLines === 'function' ? window.cartLines() : [];
+      var availability = validateCartAvailability(lines);
+      if (!availability.valid) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        showAvailabilityError(form, availability);
+        return;
+      }
+
       removeErrors(form);
       if (phone) phone.value = result.values.phone;
     }, true);
