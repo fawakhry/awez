@@ -8,6 +8,10 @@ const workflow = fs.readFileSync('.github/workflows/deploy-pages.yml', 'utf8');
 assert.match(sw, /const CACHE_NAME = 'aawz-shell-v\d+'/);
 assert.match(sw, /cache\.addAll\(APP_SHELL\)/);
 assert.match(sw, /event\.request\.mode === 'navigate'/);
+assert.match(sw, /self\.registration\.navigationPreload/);
+assert.match(sw, /navigationPreload\.enable\(\)/);
+assert.match(sw, /event\.preloadResponse/);
+assert.match(sw, /preloaded \|\| fetch\(event\.request\)/);
 assert.match(sw, /catch\(\(\) => caches\.match\('\.\/index\.html'\)\)/);
 assert.match(sw, /keys\.filter\(\(key\) => key\.startsWith\('aawz-shell-'\)/);
 assert.match(registration, /serviceWorker\.register\('\.\/service-worker\.js'/);
@@ -20,4 +24,4 @@ for (const script of deployedScripts) {
   assert.ok(sw.includes(`'${script}'`), `${script} must be precached for offline use`);
 }
 
-console.log('Offline app shell tests passed');
+console.log('Offline app shell and navigation preload tests passed');
