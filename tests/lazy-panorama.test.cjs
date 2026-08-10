@@ -4,6 +4,7 @@ const path = require('node:path');
 const {
   PANNELLUM_CSS,
   PANNELLUM_JS,
+  REFERRER_POLICY,
   needsPanoramaLibrary,
   isStylesheetReady
 } = require('../prototype/lazy-panorama.js');
@@ -13,6 +14,7 @@ assert.equal(needsPanoramaLibrary({ pannellum: {} }), false);
 assert.equal(isStylesheetReady(null), false);
 assert.equal(isStylesheetReady({ sheet: null }), false);
 assert.equal(isStylesheetReady({ sheet: {} }), true);
+assert.equal(REFERRER_POLICY, 'no-referrer');
 assert.match(PANNELLUM_CSS, /^https:\/\//);
 assert.match(PANNELLUM_JS, /^https:\/\//);
 assert.match(PANNELLUM_CSS, /pannellum@2\.5\.7\/build\/pannellum\.css$/);
@@ -27,6 +29,8 @@ const lazyPanoramaSource = fs.readFileSync(
 assert.match(lazyPanoramaSource, /Promise\.all\(\[/);
 assert.match(lazyPanoramaSource, /appendStylesheet\(document, PANNELLUM_CSS\)/);
 assert.match(lazyPanoramaSource, /appendScript\(document, PANNELLUM_JS\)/);
+assert.match(lazyPanoramaSource, /link\.referrerPolicy = REFERRER_POLICY/);
+assert.match(lazyPanoramaSource, /script\.referrerPolicy = REFERRER_POLICY/);
 assert.match(lazyPanoramaSource, /link\.onload = resolve/);
 assert.match(lazyPanoramaSource, /link\.onerror = reject/);
 
