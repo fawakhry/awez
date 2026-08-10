@@ -12,7 +12,11 @@ assert.match(css, /button/);
 assert.match(css, /input/);
 assert.match(css, /select/);
 assert.match(css, /textarea/);
+assert.match(css, /aria-current=["']page["']/);
+assert.match(css, /\.topbar/);
+assert.match(css, /\.footer-nav/);
+assert.match(css, /box-shadow:\s*0\s+0\s+0\s+2px\s+var\(--brand2/);
 assert.match(workflow, /focus-visible\.css/);
 assert.ok(sw.includes("'./focus-visible.css'"), 'focus stylesheet must be precached for offline use');
 
-console.log('Visible keyboard focus tests passed');
+console.log('Visible keyboard focus and current navigation tests passed');
