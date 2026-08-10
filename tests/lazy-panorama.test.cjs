@@ -4,9 +4,12 @@ const path = require('node:path');
 const {
   PANNELLUM_CSS,
   PANNELLUM_JS,
+  PANNELLUM_ORIGIN,
   REFERRER_POLICY,
   needsPanoramaLibrary,
-  isStylesheetReady
+  isStylesheetReady,
+  ensurePreconnect,
+  installPanoramaPreconnect
 } = require('../prototype/lazy-panorama.js');
 
 assert.equal(needsPanoramaLibrary({}), true);
@@ -15,12 +18,50 @@ assert.equal(isStylesheetReady(null), false);
 assert.equal(isStylesheetReady({ sheet: null }), false);
 assert.equal(isStylesheetReady({ sheet: {} }), true);
 assert.equal(REFERRER_POLICY, 'no-referrer');
+assert.equal(PANNELLUM_ORIGIN, 'https://cdn.jsdelivr.net');
 assert.match(PANNELLUM_CSS, /^https:\/\//);
 assert.match(PANNELLUM_JS, /^https:\/\//);
 assert.match(PANNELLUM_CSS, /pannellum@2\.5\.7\/build\/pannellum\.css$/);
 assert.match(PANNELLUM_JS, /pannellum@2\.5\.7\/build\/pannellum\.js$/);
 assert.doesNotMatch(PANNELLUM_CSS, /pannellum@2\.5\.6/);
 assert.doesNotMatch(PANNELLUM_JS, /pannellum@2\.5\.6/);
+
+let preconnectLink = null;
+const appended = [];
+const listeners = {};
+const tourButton = {
+  addEventListener(type, listener, options) {
+    listeners[type] = { listener, options };
+  }
+};
+const fakeDocument = {
+  head: {
+    appendChild(element) {
+      appended.push(element);
+      if (element.rel === 'preconnect') preconnectLink = element;
+    }
+  },
+  createElement(tagName) {
+    return { tagName };
+  },
+  querySelector(selector) {
+    if (selector === '[onclick="goTour()"]') return tourButton;
+    if (selector.startsWith('link[rel="preconnect"]')) return preconnectLink;
+    return null;
+  }
+};
+
+assert.equal(installPanoramaPreconnect(fakeDocument), true);
+assert.equal(listeners.pointerenter.options.once, true);
+assert.equal(listeners.focus.options.once, true);
+listeners.pointerenter.listener();
+assert.equal(appended.length, 1);
+assert.equal(preconnectLink.rel, 'preconnect');
+assert.equal(preconnectLink.href, PANNELLUM_ORIGIN);
+assert.equal(preconnectLink.referrerPolicy, REFERRER_POLICY);
+assert.equal(ensurePreconnect(fakeDocument), preconnectLink);
+listeners.focus.listener();
+assert.equal(appended.length, 1);
 
 const lazyPanoramaSource = fs.readFileSync(
   path.join(__dirname, '..', 'prototype', 'lazy-panorama.js'),
@@ -33,6 +74,8 @@ assert.match(lazyPanoramaSource, /link\.referrerPolicy = REFERRER_POLICY/);
 assert.match(lazyPanoramaSource, /script\.referrerPolicy = REFERRER_POLICY/);
 assert.match(lazyPanoramaSource, /link\.onload = resolve/);
 assert.match(lazyPanoramaSource, /link\.onerror = reject/);
+assert.match(lazyPanoramaSource, /trigger\.addEventListener\('pointerenter'/);
+assert.match(lazyPanoramaSource, /trigger\.addEventListener\('focus'/);
 
 const workflow = fs.readFileSync(
   path.join(__dirname, '..', '.github', 'workflows', 'deploy-pages.yml'),
