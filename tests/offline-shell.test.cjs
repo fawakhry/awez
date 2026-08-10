@@ -14,6 +14,9 @@ assert.match(sw, /event\.preloadResponse/);
 assert.match(sw, /preloaded \|\| fetch\(event\.request\)/);
 assert.match(sw, /catch\(\(\) => caches\.match\('\.\/index\.html'\)\)/);
 assert.match(sw, /keys\.filter\(\(key\) => key\.startsWith\('aawz-shell-'\)/);
+assert.match(sw, /const networkUpdate = fetch\(event\.request\)\.then/);
+assert.match(sw, /event\.waitUntil\(networkUpdate\.catch\(\(\) => undefined\)\)/);
+assert.match(sw, /caches\.match\(event\.request\)\.then\(\(cached\) => cached \|\| networkUpdate\)/);
 assert.match(registration, /serviceWorker\.register\('\.\/service-worker\.js'/);
 assert.match(registration, /updateViaCache: 'none'/);
 
@@ -35,4 +38,4 @@ for (const script of deployedScripts) {
   assert.ok(sw.includes(`'${script}'`), `${script} must be precached for offline use`);
 }
 
-console.log('Offline app shell asset integrity and navigation preload tests passed');
+console.log('Offline app shell integrity, navigation preload, and stale-while-revalidate tests passed');
