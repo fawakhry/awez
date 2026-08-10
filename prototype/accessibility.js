@@ -85,10 +85,27 @@ document.addEventListener('DOMContentLoaded', function () {
     }).observe(cartCount, { childList: true, characterData: true, subtree: true });
   }
 
+  function enhanceStoreCards(container) {
+    if (!container || typeof container.querySelectorAll !== 'function') return;
+    container.querySelectorAll('.store-card').forEach(function (card) {
+      if (card.dataset.a11yKeyboard === 'true') return;
+      card.dataset.a11yKeyboard = 'true';
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.addEventListener('keydown', function (event) {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        card.click();
+      });
+    });
+  }
+
   var resultsList = document.getElementById('resultsList');
   if (resultsList) {
+    enhanceStoreCards(resultsList);
     var resultsAnnouncementTimer = null;
     new MutationObserver(function () {
+      enhanceStoreCards(resultsList);
       clearTimeout(resultsAnnouncementTimer);
       resultsAnnouncementTimer = setTimeout(function () {
         var count = resultsList.querySelectorAll('.store-card').length;
