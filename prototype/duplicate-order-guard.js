@@ -49,6 +49,10 @@
     } catch (_) {}
   }
 
+  function shouldRecordSubmission(result) {
+    return result !== false;
+  }
+
   function install() {
     if (typeof window.placeOrder !== 'function' || window.placeOrder.__duplicateGuardInstalled) return;
 
@@ -72,7 +76,7 @@
 
       try {
         var result = originalPlaceOrder(form);
-        writeRecord(storage, fingerprint, now);
+        if (shouldRecordSubmission(result)) writeRecord(storage, fingerprint, now);
         return result;
       } finally {
         window.setTimeout(function () {
@@ -91,6 +95,7 @@
     buildFingerprint: buildFingerprint,
     isDuplicate: isDuplicate,
     readRecord: readRecord,
+    shouldRecordSubmission: shouldRecordSubmission,
     install: install
   };
 });
