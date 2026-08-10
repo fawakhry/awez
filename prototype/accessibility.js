@@ -26,6 +26,12 @@ document.addEventListener('DOMContentLoaded', function () {
   var searchInput = document.getElementById('searchInput');
   if (searchInput) searchInput.setAttribute('aria-label', 'ابحث عن متجر أو منتج في بنها');
 
+  var voiceSearchButton = document.querySelector('button[onclick="voiceSearch()"]');
+  if (voiceSearchButton) {
+    voiceSearchButton.setAttribute('aria-label', 'بدء البحث الصوتي');
+    voiceSearchButton.setAttribute('title', 'بحث صوتي');
+  }
+
   var cartCount = document.getElementById('cartCount');
   if (cartCount) {
     var previousCount = cartCount.textContent.trim();
