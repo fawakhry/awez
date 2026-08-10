@@ -40,10 +40,15 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(
-      keys.filter((key) => key.startsWith('aawz-shell-') && key !== CACHE_NAME)
-        .map((key) => caches.delete(key))
-    ))
+    Promise.all([
+      caches.keys().then((keys) => Promise.all(
+        keys.filter((key) => key.startsWith('aawz-shell-') && key !== CACHE_NAME)
+          .map((key) => caches.delete(key))
+      )),
+      self.registration.navigationPreload
+        ? self.registration.navigationPreload.enable()
+        : Promise.resolve()
+    ])
   );
   self.clients.claim();
 });
@@ -55,7 +60,8 @@ self.addEventListener('fetch', (event) => {
 
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request)
+      event.preloadResponse
+        .then((preloaded) => preloaded || fetch(event.request))
         .then((response) => {
           const copy = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put('./index.html', copy));
