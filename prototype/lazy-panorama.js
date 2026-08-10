@@ -1,6 +1,7 @@
 (function () {
   const PANNELLUM_CSS = 'https://cdn.jsdelivr.net/npm/pannellum@2.5.7/build/pannellum.css';
   const PANNELLUM_JS = 'https://cdn.jsdelivr.net/npm/pannellum@2.5.7/build/pannellum.js';
+  const REFERRER_POLICY = 'no-referrer';
   let libraryPromise = null;
 
   function needsPanoramaLibrary(scope) {
@@ -26,6 +27,7 @@
       const link = doc.createElement('link');
       link.rel = 'stylesheet';
       link.href = href;
+      link.referrerPolicy = REFERRER_POLICY;
       link.onload = resolve;
       link.onerror = reject;
       doc.head.appendChild(link);
@@ -47,6 +49,7 @@
       const script = doc.createElement('script');
       script.src = src;
       script.async = true;
+      script.referrerPolicy = REFERRER_POLICY;
       script.onload = resolve;
       script.onerror = reject;
       doc.head.appendChild(script);
@@ -71,6 +74,7 @@
     module.exports = {
       PANNELLUM_CSS,
       PANNELLUM_JS,
+      REFERRER_POLICY,
       needsPanoramaLibrary,
       isStylesheetReady
     };
