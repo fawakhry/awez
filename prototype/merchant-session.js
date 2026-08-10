@@ -11,6 +11,8 @@
   function isSessionValid(session, now = Date.now()) {
     if (!session || session.authenticated !== true) return false;
     if (!Number.isFinite(session.createdAt) || !Number.isFinite(session.lastActivityAt)) return false;
+    if (session.createdAt > now || session.lastActivityAt > now) return false;
+    if (session.lastActivityAt < session.createdAt) return false;
     return now - session.lastActivityAt < IDLE_TIMEOUT_MS && now - session.createdAt < ABSOLUTE_TIMEOUT_MS;
   }
 
