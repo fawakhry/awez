@@ -14,6 +14,10 @@ assert.equal(guard.isDuplicate({ fingerprint, submittedAt: 1000 }, fingerprint, 
 assert.equal(guard.isDuplicate({ fingerprint, submittedAt: 1000 }, fingerprint, 17000, 15000), false);
 assert.equal(guard.isDuplicate({ fingerprint: 'different', submittedAt: 1000 }, fingerprint, 5000, 15000), false);
 
+assert.equal(guard.shouldRecordSubmission(undefined), true, 'الإرسال الناجح الحالي لا يرجع قيمة ويجب تسجيله');
+assert.equal(guard.shouldRecordSubmission(true), true, 'أي نجاح صريح يجب تسجيله');
+assert.equal(guard.shouldRecordSubmission(false), false, 'فشل الإرسال لا يجب أن يمنع إعادة المحاولة');
+
 const brokenStorage = { getItem() { return '{bad json'; } };
 assert.equal(guard.readRecord(brokenStorage), null, 'يجب تحمل بيانات جلسة تالفة');
 
