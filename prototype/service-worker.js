@@ -72,13 +72,16 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  const networkUpdate = fetch(event.request).then((response) => {
+    if (response.ok) {
+      const copy = response.clone();
+      caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+    }
+    return response;
+  });
+
+  event.waitUntil(networkUpdate.catch(() => undefined));
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request).then((response) => {
-      if (response.ok) {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-      }
-      return response;
-    }))
+    caches.match(event.request).then((cached) => cached || networkUpdate)
   );
 });
