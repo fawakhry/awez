@@ -1,5 +1,11 @@
 const assert = require('node:assert/strict');
-const { isSameLocalDay, getDailyMerchantSummary } = require('../prototype/merchant-daily-summary.js');
+const {
+  isSameLocalDay,
+  getDailyMerchantSummary,
+  getLatestActiveOrder,
+  getRelativeTimeValue,
+  formatRelativeOrderAge
+} = require('../prototype/merchant-daily-summary.js');
 
 const now = new Date(2026, 7, 9, 15, 0, 0);
 
@@ -28,5 +34,18 @@ assert.deepEqual(getDailyMerchantSummary(null, now), {
   delivered: 0,
   revenue: 0
 });
+
+assert.equal(getLatestActiveOrder(orders)?.id, 'today-preparing');
+assert.equal(getLatestActiveOrder([
+  { id: 'bad-date', createdAt: 'nope', status: 'pending' },
+  { id: 'done', createdAt: now.toISOString(), status: 'delivered' }
+]), null);
+assert.equal(getLatestActiveOrder(null), null);
+
+assert.deepEqual(getRelativeTimeValue(new Date(2026, 7, 9, 14, 30), now), { value: -30, unit: 'minute' });
+assert.deepEqual(getRelativeTimeValue(new Date(2026, 7, 9, 12, 0), now), { value: -3, unit: 'hour' });
+assert.deepEqual(getRelativeTimeValue(new Date(2026, 7, 7, 15, 0), now), { value: -2, unit: 'day' });
+assert.equal(getRelativeTimeValue('bad-date', now), null);
+assert.ok(formatRelativeOrderAge(new Date(2026, 7, 9, 14, 30), now).length > 0);
 
 console.log('merchant daily summary tests passed');
