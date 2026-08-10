@@ -32,6 +32,24 @@ document.addEventListener('DOMContentLoaded', function () {
     voiceSearchButton.setAttribute('title', 'بحث صوتي');
   }
 
+  var merchantPassword = document.querySelector('#loginForm input[name="password"]');
+  if (merchantPassword && !document.getElementById('merchantPasswordToggle')) {
+    var passwordToggle = document.createElement('button');
+    passwordToggle.id = 'merchantPasswordToggle';
+    passwordToggle.type = 'button';
+    passwordToggle.className = 'ghost';
+    passwordToggle.textContent = 'إظهار كلمة المرور';
+    passwordToggle.setAttribute('aria-pressed', 'false');
+    passwordToggle.style.marginTop = '8px';
+    passwordToggle.addEventListener('click', function () {
+      var showing = merchantPassword.type === 'text';
+      merchantPassword.type = showing ? 'password' : 'text';
+      passwordToggle.setAttribute('aria-pressed', String(!showing));
+      passwordToggle.textContent = showing ? 'إظهار كلمة المرور' : 'إخفاء كلمة المرور';
+    });
+    merchantPassword.insertAdjacentElement('afterend', passwordToggle);
+  }
+
   var cartCount = document.getElementById('cartCount');
   if (cartCount) {
     var previousCount = cartCount.textContent.trim();
