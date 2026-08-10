@@ -1,6 +1,7 @@
 (function () {
   const PANNELLUM_CSS = 'https://cdn.jsdelivr.net/npm/pannellum@2.5.7/build/pannellum.css';
   const PANNELLUM_JS = 'https://cdn.jsdelivr.net/npm/pannellum@2.5.7/build/pannellum.js';
+  const PANNELLUM_ORIGIN = new URL(PANNELLUM_JS).origin;
   const REFERRER_POLICY = 'no-referrer';
   let libraryPromise = null;
 
@@ -10,6 +11,21 @@
 
   function isStylesheetReady(link) {
     return Boolean(link && link.sheet);
+  }
+
+  function ensurePreconnect(doc, origin) {
+    if (!doc || !doc.head || typeof doc.createElement !== 'function') return null;
+
+    const targetOrigin = origin || PANNELLUM_ORIGIN;
+    const existing = doc.querySelector(`link[rel="preconnect"][href="${targetOrigin}"]`);
+    if (existing) return existing;
+
+    const link = doc.createElement('link');
+    link.rel = 'preconnect';
+    link.href = targetOrigin;
+    link.referrerPolicy = REFERRER_POLICY;
+    doc.head.appendChild(link);
+    return link;
   }
 
   function appendStylesheet(doc, href) {
@@ -70,13 +86,28 @@
     return libraryPromise;
   }
 
+  function installPanoramaPreconnect(doc) {
+    if (!doc || typeof doc.querySelector !== 'function') return false;
+
+    const trigger = doc.querySelector('[onclick="goTour()"]');
+    if (!trigger || typeof trigger.addEventListener !== 'function') return false;
+
+    const warmConnection = () => ensurePreconnect(doc, PANNELLUM_ORIGIN);
+    trigger.addEventListener('pointerenter', warmConnection, { once: true });
+    trigger.addEventListener('focus', warmConnection, { once: true });
+    return true;
+  }
+
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
       PANNELLUM_CSS,
       PANNELLUM_JS,
+      PANNELLUM_ORIGIN,
       REFERRER_POLICY,
       needsPanoramaLibrary,
-      isStylesheetReady
+      isStylesheetReady,
+      ensurePreconnect,
+      installPanoramaPreconnect
     };
   }
 
@@ -84,6 +115,8 @@
 
   const originalInitTour = window.initTour;
   if (typeof originalInitTour !== 'function') return;
+
+  installPanoramaPreconnect(document);
 
   window.initTour = async function lazyInitTour() {
     if (!needsPanoramaLibrary(window)) return originalInitTour();
