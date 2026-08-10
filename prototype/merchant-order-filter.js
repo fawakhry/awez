@@ -17,6 +17,26 @@
       .trim();
   }
 
+  function countOrdersByStatus(list) {
+    const counts = {
+      all: 0,
+      pending: 0,
+      preparing: 0,
+      onway: 0,
+      delivered: 0,
+      cancelled: 0
+    };
+
+    for (const order of Array.isArray(list) ? list : []) {
+      counts.all += 1;
+      if (Object.prototype.hasOwnProperty.call(counts, order?.status)) {
+        counts[order.status] += 1;
+      }
+    }
+
+    return counts;
+  }
+
   function filterOrders(list, status = 'all', query = '') {
     const safeStatus = VALID_STATUSES.has(status) ? status : 'all';
     const normalizedQuery = normalizeQuery(query);
@@ -40,7 +60,7 @@
   }
 
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { filterOrders, normalizeQuery };
+    module.exports = { filterOrders, normalizeQuery, countOrdersByStatus };
   }
 
   if (typeof window === 'undefined' || typeof renderMerchantOrders !== 'function') return;
@@ -51,7 +71,7 @@
   let activeQuery = '';
   const originalRenderMerchantOrders = renderMerchantOrders;
 
-  function renderFilterControls(total, visible) {
+  function renderFilterControls(total, visible, counts) {
     const root = document.getElementById('tab-merchantOrders');
     if (!root) return;
 
@@ -62,12 +82,12 @@
       <div class="form-grid">
         <label>حالة الطلب
           <select id="merchantOrderStatusFilter" aria-label="فلترة الطلبات حسب الحالة">
-            <option value="all">كل الحالات</option>
-            <option value="pending">جديد</option>
-            <option value="preparing">جاري التجهيز</option>
-            <option value="onway">في الطريق</option>
-            <option value="delivered">تم التسليم</option>
-            <option value="cancelled">ملغي</option>
+            <option value="all">كل الحالات (${counts.all})</option>
+            <option value="pending">جديد (${counts.pending})</option>
+            <option value="preparing">جاري التجهيز (${counts.preparing})</option>
+            <option value="onway">في الطريق (${counts.onway})</option>
+            <option value="delivered">تم التسليم (${counts.delivered})</option>
+            <option value="cancelled">ملغي (${counts.cancelled})</option>
           </select>
         </label>
         <label>بحث في الطلبات
@@ -108,6 +128,6 @@
     } finally {
       orders = allOrders;
     }
-    renderFilterControls(allOrders.length, visibleOrders.length);
+    renderFilterControls(allOrders.length, visibleOrders.length, countOrdersByStatus(allOrders));
   };
 })();
