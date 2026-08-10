@@ -17,6 +17,17 @@ assert.match(sw, /keys\.filter\(\(key\) => key\.startsWith\('aawz-shell-'\)/);
 assert.match(registration, /serviceWorker\.register\('\.\/service-worker\.js'/);
 assert.match(registration, /updateViaCache: 'none'/);
 
+const shellMatch = sw.match(/const APP_SHELL = \[([\s\S]*?)\];/);
+assert.ok(shellMatch, 'Expected APP_SHELL asset list in service worker');
+const shellAssets = [...shellMatch[1].matchAll(/'([^']+)'/g)].map((match) => match[1]);
+assert.ok(shellAssets.length > 0, 'Expected at least one APP_SHELL asset');
+assert.equal(new Set(shellAssets).size, shellAssets.length, 'APP_SHELL must not contain duplicate assets');
+for (const asset of shellAssets) {
+  if (asset === './') continue;
+  const localPath = `prototype/${asset.replace(/^\.\//, '')}`;
+  assert.ok(fs.existsSync(localPath), `${asset} must exist because cache.addAll fails when an app-shell request fails`);
+}
+
 const deployedScripts = [...workflow.matchAll(/<script src="\.\/([^"?]+\.js)"><\/script>/g)]
   .map((match) => `./${match[1]}`);
 assert.ok(deployedScripts.length > 0, 'Expected deployed enhancement scripts in Pages workflow');
@@ -24,4 +35,4 @@ for (const script of deployedScripts) {
   assert.ok(sw.includes(`'${script}'`), `${script} must be precached for offline use`);
 }
 
-console.log('Offline app shell and navigation preload tests passed');
+console.log('Offline app shell asset integrity and navigation preload tests passed');
