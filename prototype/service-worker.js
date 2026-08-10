@@ -8,6 +8,7 @@ const APP_SHELL = [
   './reduced-motion.css',
   './focus-visible.css',
   './search-normalization.js',
+  './store-scoped-products.js',
   './search-landmark.js',
   './accessibility.js',
   './order-review.js',

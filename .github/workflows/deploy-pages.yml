@@ -201,6 +201,9 @@ jobs:
       - name: Add Arabic search normalization
         run: sed -i 's#</body>#<script src="./search-normalization.js"></script></body>#' prototype/index.html
 
+      - name: Add store-scoped product search
+        run: sed -i 's#</body>#<script src="./store-scoped-products.js"></script></body>#' prototype/index.html
+
       - name: Add search landmark
         run: sed -i 's#</body>#<script src="./search-landmark.js"></script></body>#' prototype/index.html
 
