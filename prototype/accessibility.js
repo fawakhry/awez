@@ -1,4 +1,27 @@
 document.addEventListener('DOMContentLoaded', function () {
+  var mainContent = document.querySelector('main');
+  if (mainContent && !document.getElementById('skipToContent')) {
+    if (!mainContent.id) mainContent.id = 'mainContent';
+    var skipLink = document.createElement('a');
+    skipLink.id = 'skipToContent';
+    skipLink.href = '#' + mainContent.id;
+    skipLink.textContent = 'تخطي إلى المحتوى';
+    skipLink.style.position = 'fixed';
+    skipLink.style.top = '8px';
+    skipLink.style.right = '8px';
+    skipLink.style.zIndex = '100';
+    skipLink.style.padding = '10px 14px';
+    skipLink.style.borderRadius = '10px';
+    skipLink.style.background = '#f8a810';
+    skipLink.style.color = '#101827';
+    skipLink.style.fontWeight = '800';
+    skipLink.style.transform = 'translateY(-160%)';
+    skipLink.style.transition = 'transform .15s ease';
+    skipLink.addEventListener('focus', function () { skipLink.style.transform = 'translateY(0)'; });
+    skipLink.addEventListener('blur', function () { skipLink.style.transform = 'translateY(-160%)'; });
+    document.body.insertBefore(skipLink, document.body.firstChild);
+  }
+
   var status = document.createElement('div');
   status.id = 'a11yStatus';
   status.setAttribute('role', 'status');
