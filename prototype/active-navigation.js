@@ -54,6 +54,16 @@
     return currentLabel;
   }
 
+  function focusActiveViewHeading(documentRef) {
+    const viewId = currentViewId(documentRef);
+    const heading = documentRef.querySelector(`#${viewId} h2`);
+    if (!heading || typeof heading.focus !== "function") return false;
+
+    heading.setAttribute("tabindex", "-1");
+    heading.focus();
+    return true;
+  }
+
   function installActiveNavigation(documentRef, rootRef) {
     if (!documentRef || documentRef.documentElement?.dataset?.activeNavigationInstalled === "true") return false;
     if (documentRef.documentElement?.dataset) documentRef.documentElement.dataset.activeNavigationInstalled = "true";
@@ -65,6 +75,7 @@
       rootRef.go = function (...args) {
         const result = originalGo.apply(this, args);
         updateActiveNavigation(documentRef);
+        focusActiveViewHeading(documentRef);
         return result;
       };
     }
@@ -74,6 +85,7 @@
       rootRef.openMerchant = function (...args) {
         const result = originalOpenMerchant.apply(this, args);
         updateActiveNavigation(documentRef);
+        focusActiveViewHeading(documentRef);
         return result;
       };
     }
@@ -81,5 +93,13 @@
     return true;
   }
 
-  return { VIEW_TO_LABEL, VIEW_TO_TITLE, currentViewId, updateDocumentTitle, updateActiveNavigation, installActiveNavigation };
+  return {
+    VIEW_TO_LABEL,
+    VIEW_TO_TITLE,
+    currentViewId,
+    updateDocumentTitle,
+    updateActiveNavigation,
+    focusActiveViewHeading,
+    installActiveNavigation
+  };
 });
