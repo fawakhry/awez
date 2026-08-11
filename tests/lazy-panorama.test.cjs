@@ -5,8 +5,11 @@ const {
   PANNELLUM_CSS,
   PANNELLUM_JS,
   PANNELLUM_ORIGIN,
+  LEGACY_PANNELLUM_PATTERN,
   REFERRER_POLICY,
   needsPanoramaLibrary,
+  hasLegacyPanoramaAssets,
+  needsPanoramaUpgrade,
   isStylesheetReady,
   setPanoramaBusy,
   ensurePreconnect,
@@ -26,6 +29,31 @@ assert.match(PANNELLUM_CSS, /pannellum@2\.5\.7\/build\/pannellum\.css$/);
 assert.match(PANNELLUM_JS, /pannellum@2\.5\.7\/build\/pannellum\.js$/);
 assert.doesNotMatch(PANNELLUM_CSS, /pannellum@2\.5\.6/);
 assert.doesNotMatch(PANNELLUM_JS, /pannellum@2\.5\.6/);
+assert.equal(LEGACY_PANNELLUM_PATTERN.test('https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js'), true);
+assert.equal(LEGACY_PANNELLUM_PATTERN.test(PANNELLUM_JS), false);
+
+const legacyDocument = {
+  querySelectorAll() {
+    return [
+      { href: 'https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css' },
+      { src: 'https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js' }
+    ];
+  }
+};
+const currentDocument = {
+  querySelectorAll() {
+    return [
+      { href: PANNELLUM_CSS },
+      { src: PANNELLUM_JS }
+    ];
+  }
+};
+assert.equal(hasLegacyPanoramaAssets(null), false);
+assert.equal(hasLegacyPanoramaAssets(legacyDocument), true);
+assert.equal(hasLegacyPanoramaAssets(currentDocument), false);
+assert.equal(needsPanoramaUpgrade({}, currentDocument), true);
+assert.equal(needsPanoramaUpgrade({ pannellum: {} }, currentDocument), false);
+assert.equal(needsPanoramaUpgrade({ pannellum: {} }, legacyDocument), true);
 
 const busyState = { value: null };
 const busyDocument = {
@@ -95,6 +123,7 @@ assert.match(lazyPanoramaSource, /link\.onload = resolve/);
 assert.match(lazyPanoramaSource, /link\.onerror = reject/);
 assert.match(lazyPanoramaSource, /trigger\.addEventListener\('pointerenter'/);
 assert.match(lazyPanoramaSource, /trigger\.addEventListener\('focus'/);
+assert.match(lazyPanoramaSource, /needsPanoramaUpgrade\(window, document\)/);
 assert.match(lazyPanoramaSource, /setPanoramaBusy\(document, true\)/);
 assert.match(lazyPanoramaSource, /finally\s*\{\s*setPanoramaBusy\(document, false\)/);
 
