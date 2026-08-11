@@ -8,6 +8,7 @@ const {
   REFERRER_POLICY,
   needsPanoramaLibrary,
   isStylesheetReady,
+  setPanoramaBusy,
   ensurePreconnect,
   installPanoramaPreconnect
 } = require('../prototype/lazy-panorama.js');
@@ -25,6 +26,24 @@ assert.match(PANNELLUM_CSS, /pannellum@2\.5\.7\/build\/pannellum\.css$/);
 assert.match(PANNELLUM_JS, /pannellum@2\.5\.7\/build\/pannellum\.js$/);
 assert.doesNotMatch(PANNELLUM_CSS, /pannellum@2\.5\.6/);
 assert.doesNotMatch(PANNELLUM_JS, /pannellum@2\.5\.6/);
+
+const busyState = { value: null };
+const busyDocument = {
+  getElementById(id) {
+    if (id !== 'panorama') return null;
+    return {
+      setAttribute(name, value) {
+        if (name === 'aria-busy') busyState.value = value;
+      }
+    };
+  }
+};
+assert.equal(setPanoramaBusy(busyDocument, true), true);
+assert.equal(busyState.value, 'true');
+assert.equal(setPanoramaBusy(busyDocument, false), true);
+assert.equal(busyState.value, 'false');
+assert.equal(setPanoramaBusy(null, true), false);
+assert.equal(setPanoramaBusy({ getElementById() { return null; } }, true), false);
 
 let preconnectLink = null;
 const appended = [];
@@ -76,6 +95,8 @@ assert.match(lazyPanoramaSource, /link\.onload = resolve/);
 assert.match(lazyPanoramaSource, /link\.onerror = reject/);
 assert.match(lazyPanoramaSource, /trigger\.addEventListener\('pointerenter'/);
 assert.match(lazyPanoramaSource, /trigger\.addEventListener\('focus'/);
+assert.match(lazyPanoramaSource, /setPanoramaBusy\(document, true\)/);
+assert.match(lazyPanoramaSource, /finally\s*\{\s*setPanoramaBusy\(document, false\)/);
 
 const workflow = fs.readFileSync(
   path.join(__dirname, '..', '.github', 'workflows', 'deploy-pages.yml'),

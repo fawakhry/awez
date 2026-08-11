@@ -13,6 +13,14 @@
     return Boolean(link && link.sheet);
   }
 
+  function setPanoramaBusy(doc, busy) {
+    if (!doc || typeof doc.getElementById !== 'function') return false;
+    const panorama = doc.getElementById('panorama');
+    if (!panorama || typeof panorama.setAttribute !== 'function') return false;
+    panorama.setAttribute('aria-busy', busy ? 'true' : 'false');
+    return true;
+  }
+
   function ensurePreconnect(doc, origin) {
     if (!doc || !doc.head || typeof doc.createElement !== 'function') return null;
 
@@ -106,6 +114,7 @@
       REFERRER_POLICY,
       needsPanoramaLibrary,
       isStylesheetReady,
+      setPanoramaBusy,
       ensurePreconnect,
       installPanoramaPreconnect
     };
@@ -119,15 +128,21 @@
   installPanoramaPreconnect(document);
 
   window.initTour = async function lazyInitTour() {
-    if (!needsPanoramaLibrary(window)) return originalInitTour();
-
-    if (typeof window.toast === 'function') window.toast('جاري تحميل الجولة 360');
+    setPanoramaBusy(document, true);
     try {
-      await loadPanoramaLibrary();
+      if (needsPanoramaLibrary(window)) {
+        if (typeof window.toast === 'function') window.toast('جاري تحميل الجولة 360');
+        try {
+          await loadPanoramaLibrary();
+        } catch (error) {
+          console.error('Unable to load Pannellum', error);
+          if (typeof window.toast === 'function') window.toast('تعذر تحميل الجولة، تحقق من الإنترنت وحاول تاني');
+          return;
+        }
+      }
       return originalInitTour();
-    } catch (error) {
-      console.error('Unable to load Pannellum', error);
-      if (typeof window.toast === 'function') window.toast('تعذر تحميل الجولة، تحقق من الإنترنت وحاول تاني');
+    } finally {
+      setPanoramaBusy(document, false);
     }
   };
 })();
