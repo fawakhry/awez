@@ -15,13 +15,32 @@
     merchant: "التاجر"
   };
 
+  const VIEW_TO_TITLE = {
+    home: "عاوز — هتلاقي",
+    results: "نتائج البحث — عاوز",
+    store: "المتجر — عاوز",
+    cart: "سلة المشتريات — عاوز",
+    checkout: "تأكيد الطلب — عاوز",
+    orders: "طلباتي — عاوز",
+    tour: "جولة 360 — عاوز",
+    merchantLogin: "دخول التاجر — عاوز",
+    merchant: "لوحة التاجر — عاوز"
+  };
+
   function currentViewId(documentRef) {
     const active = documentRef.querySelector(".view.active");
     return active ? active.id : "home";
   }
 
+  function updateDocumentTitle(documentRef, viewId) {
+    const title = VIEW_TO_TITLE[viewId] || VIEW_TO_TITLE.home;
+    documentRef.title = title;
+    return title;
+  }
+
   function updateActiveNavigation(documentRef) {
-    const currentLabel = VIEW_TO_LABEL[currentViewId(documentRef)] || "الرئيسية";
+    const viewId = currentViewId(documentRef);
+    const currentLabel = VIEW_TO_LABEL[viewId] || "الرئيسية";
     const buttons = Array.from(documentRef.querySelectorAll(".topbar .nav-btn, .topbar .primary, .footer-nav .nav-btn"));
 
     buttons.forEach((button) => {
@@ -31,6 +50,7 @@
       else button.removeAttribute("aria-current");
     });
 
+    updateDocumentTitle(documentRef, viewId);
     return currentLabel;
   }
 
@@ -61,5 +81,5 @@
     return true;
   }
 
-  return { VIEW_TO_LABEL, currentViewId, updateActiveNavigation, installActiveNavigation };
+  return { VIEW_TO_LABEL, VIEW_TO_TITLE, currentViewId, updateDocumentTitle, updateActiveNavigation, installActiveNavigation };
 });
