@@ -33,6 +33,28 @@ const deliveredOrders = [{ id: 'AWZ-200', status: 'delivered', items: [{ id: 'oi
 assert.deepEqual(cancelPendingOrder('AWZ-200', deliveredOrders, products), { ok: false, reason: 'not-pending' });
 assert.deepEqual(cancelPendingOrder('AWZ-404', deliveredOrders, products), { ok: false, reason: 'not-found' });
 
+const stockBeforeInvalidCancel = products.map((product) => product.stock);
+const invalidOrders = [{
+  id: 'AWZ-300',
+  status: 'pending',
+  items: [
+    { id: 'oil', qty: 2 },
+    { id: 'rice', qty: -1 }
+  ]
+}];
+assert.deepEqual(
+  cancelPendingOrder('AWZ-300', invalidOrders, products),
+  { ok: false, reason: 'invalid-items' }
+);
+assert.deepEqual(products.map((product) => product.stock), stockBeforeInvalidCancel, 'invalid cancellation must not partially restore stock');
+assert.equal(invalidOrders[0].status, 'pending');
+
+const missingItemsOrder = [{ id: 'AWZ-301', status: 'pending' }];
+assert.deepEqual(
+  cancelPendingOrder('AWZ-301', missingItemsOrder, products),
+  { ok: false, reason: 'invalid-items' }
+);
+
 (async () => {
   let copied = '';
   assert.deepEqual(
