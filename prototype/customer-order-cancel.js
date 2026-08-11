@@ -3,6 +3,14 @@
   if (typeof module === 'object' && module.exports) module.exports = api;
   if (root) root.AawzCustomerOrderCancel = api;
 })(typeof window !== 'undefined' ? window : globalThis, function () {
+  const STATUS_TRANSITIONS = Object.freeze({
+    pending: Object.freeze(['preparing', 'cancelled']),
+    preparing: Object.freeze(['onway']),
+    onway: Object.freeze(['delivered']),
+    delivered: Object.freeze([]),
+    cancelled: Object.freeze([])
+  });
+
   function normalizeOrderId(value) {
     const id = String(value == null ? '' : value).trim();
     return /^AWZ-[A-Za-z0-9-]+$/.test(id) ? id : '';
@@ -47,6 +55,35 @@
     return { ok: true, order };
   }
 
+  function canTransitionOrderStatus(currentStatus, nextStatus) {
+    if (currentStatus === nextStatus) return true;
+    return Array.isArray(STATUS_TRANSITIONS[currentStatus]) && STATUS_TRANSITIONS[currentStatus].includes(nextStatus);
+  }
+
+  function transitionOrderStatus(orderId, nextStatus, orders, products, now) {
+    const order = Array.isArray(orders) ? orders.find((item) => item && item.id === orderId) : null;
+    if (!order) return { ok: false, reason: 'not-found' };
+    if (!Object.prototype.hasOwnProperty.call(STATUS_TRANSITIONS, nextStatus)) {
+      return { ok: false, reason: 'invalid-status' };
+    }
+    if (order.status === nextStatus) return { ok: true, unchanged: true, order };
+    if (!canTransitionOrderStatus(order.status, nextStatus)) {
+      return { ok: false, reason: 'invalid-transition', currentStatus: order.status, nextStatus };
+    }
+
+    let result;
+    if (nextStatus === 'cancelled') {
+      result = cancelPendingOrder(orderId, orders, products);
+      if (!result.ok) return result;
+    } else {
+      order.status = nextStatus;
+      result = { ok: true, order };
+    }
+
+    order.statusUpdatedAt = typeof now === 'function' ? now() : new Date().toISOString();
+    return result;
+  }
+
   function addCancelButtons(container, orders) {
     if (!container) return;
     const cards = container.querySelectorAll('.order-card');
@@ -79,7 +116,7 @@
       button.addEventListener('click', () => {
         const confirmed = window.confirm(`متأكد إنك عاوز تلغي الطلب ${order.id}؟`);
         if (!confirmed) return;
-        const result = cancelPendingOrder(order.id, orders, products);
+        const result = transitionOrderStatus(order.id, 'cancelled', orders, products);
         if (!result.ok) return toast('الطلب لم يعد قابلًا للإلغاء');
         save();
         renderCustomerOrders();
@@ -96,10 +133,39 @@
       originalRender();
       addCancelButtons(document.getElementById('customerOrders'), orders);
     };
+
+    if (typeof updateOrderStatus === 'function') {
+      updateOrderStatus = function guardedUpdateOrderStatus(orderId, nextStatus) {
+        const result = transitionOrderStatus(orderId, nextStatus, orders, products);
+        if (!result.ok) {
+          if (typeof renderMerchantOrders === 'function') renderMerchantOrders();
+          toast(result.reason === 'invalid-transition'
+            ? 'انتقال حالة الطلب غير مسموح'
+            : 'تعذر تحديث حالة الطلب بأمان');
+          return result;
+        }
+        if (result.unchanged) return result;
+        save();
+        if (typeof renderMerchantOrders === 'function') renderMerchantOrders();
+        if (document.getElementById('orders')?.classList.contains('active')) renderCustomerOrders();
+        toast('تم تحديث حالة الطلب');
+        return result;
+      };
+    }
+
     install.done = true;
     if (document.getElementById('orders')?.classList.contains('active')) renderCustomerOrders();
   }
 
   if (typeof document !== 'undefined') install();
-  return { normalizeOrderId, copyOrderId, cancelPendingOrder, addCancelButtons, install };
+  return {
+    STATUS_TRANSITIONS,
+    normalizeOrderId,
+    copyOrderId,
+    cancelPendingOrder,
+    canTransitionOrderStatus,
+    transitionOrderStatus,
+    addCancelButtons,
+    install
+  };
 });
