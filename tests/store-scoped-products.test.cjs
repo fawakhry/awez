@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const {
   migrateProducts,
   productsForStore,
+  indexActiveProductTextByStore,
   filterStoresByQuery,
 } = require('../prototype/store-scoped-products.js');
 
@@ -46,5 +47,44 @@ assert.deepEqual(
   'المنتج غير النشط لا يجعل متجره يظهر في نتائج البحث'
 );
 assert.equal(filterStoresByQuery(stores, migrated, '').length, 2, 'البحث الفارغ يعرض كل المتاجر');
+
+const indexed = indexActiveProductTextByStore(migrated);
+assert.deepEqual(indexed.get('kheir'), ['أرز مصري', 'سوبر ماركت', 'زيت ذرة', 'سوبر ماركت']);
+assert.deepEqual(indexed.get('trend'), ['قميص', 'ملابس']);
+
+let storeIdReads = 0;
+const measuredProducts = [
+  {
+    id: 'measured-rice',
+    name: 'أرز',
+    category: 'سوبر ماركت',
+    active: true,
+    get storeId() {
+      storeIdReads += 1;
+      return 'kheir';
+    },
+  },
+  {
+    id: 'measured-shirt',
+    name: 'قميص',
+    category: 'ملابس',
+    active: true,
+    get storeId() {
+      storeIdReads += 1;
+      return 'trend';
+    },
+  },
+];
+const manyStores = [
+  ...stores,
+  { id: 'services', name: 'خدمات بنها', category: 'خدمات', address: 'بنها' },
+  { id: 'food', name: 'مطعم بنها', category: 'مطعم', address: 'بنها' },
+];
+filterStoresByQuery(manyStores, measuredProducts, 'أرز');
+assert.equal(
+  storeIdReads,
+  measuredProducts.length,
+  'فهرسة المنتجات تقرأ ربط المتجر مرة واحدة لكل منتج بدل مرة لكل متجر'
+);
 
 console.log('store-scoped products tests passed');
