@@ -13,8 +13,7 @@ const orders = [{
   status: 'pending',
   items: [
     { id: 'oil', qty: 2 },
-    { id: 'rice', qty: 3 },
-    { id: 'missing', qty: 1 }
+    { id: 'rice', qty: 3 }
   ]
 }];
 
@@ -54,6 +53,44 @@ assert.deepEqual(
   cancelPendingOrder('AWZ-301', missingItemsOrder, products),
   { ok: false, reason: 'invalid-items' }
 );
+
+const stockBeforeInventoryMismatch = products.map((product) => product.stock);
+const missingProductOrder = [{
+  id: 'AWZ-302',
+  status: 'pending',
+  items: [
+    { id: 'oil', qty: 1 },
+    { id: 'missing', qty: 1 }
+  ]
+}];
+assert.deepEqual(
+  cancelPendingOrder('AWZ-302', missingProductOrder, products),
+  { ok: false, reason: 'inventory-mismatch' }
+);
+assert.deepEqual(products.map((product) => product.stock), stockBeforeInventoryMismatch, 'missing product must not cause partial restock');
+assert.equal(missingProductOrder[0].status, 'pending');
+
+const invalidStockProducts = [
+  { id: 'oil', stock: 5 },
+  { id: 'rice', stock: 'unknown' }
+];
+const invalidStockOrder = [{
+  id: 'AWZ-303',
+  status: 'pending',
+  items: [
+    { id: 'oil', qty: 1 },
+    { id: 'rice', qty: 1 }
+  ]
+}];
+assert.deepEqual(
+  cancelPendingOrder('AWZ-303', invalidStockOrder, invalidStockProducts),
+  { ok: false, reason: 'inventory-mismatch' }
+);
+assert.deepEqual(invalidStockProducts, [
+  { id: 'oil', stock: 5 },
+  { id: 'rice', stock: 'unknown' }
+], 'invalid stock must leave every product untouched');
+assert.equal(invalidStockOrder[0].status, 'pending');
 
 (async () => {
   let copied = '';
