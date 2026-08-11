@@ -62,6 +62,21 @@
     return new Intl.NumberFormat('ar-EG').format(Number(value) || 0);
   }
 
+  function buildOrderStatusControlLabel(orderId) {
+    const id = String(orderId ?? '').trim();
+    return id ? `تغيير حالة الطلب ${id}` : 'تغيير حالة الطلب';
+  }
+
+  function labelOrderStatusControls(container, list) {
+    if (!container || typeof container.querySelectorAll !== 'function') return 0;
+    const controls = Array.from(container.querySelectorAll('.order-card select'));
+    const safeOrders = Array.isArray(list) ? list : [];
+    controls.forEach((control, index) => {
+      control.setAttribute('aria-label', buildOrderStatusControlLabel(safeOrders[index]?.id));
+    });
+    return controls.length;
+  }
+
   function filterOrders(list, status = 'all', query = '') {
     const safeStatus = VALID_STATUSES.has(status) ? status : 'all';
     const normalizedQuery = normalizeQuery(query);
@@ -92,6 +107,8 @@
       hasActiveFilters,
       summarizeActiveOrders,
       formatCount,
+      buildOrderStatusControlLabel,
+      labelOrderStatusControls,
       ACTIVE_STATUSES,
       ACTIVE_STATUS_LABELS
     };
@@ -203,6 +220,8 @@
     } finally {
       orders = allOrders;
     }
+    const root = document.getElementById('tab-merchantOrders');
+    labelOrderStatusControls(root, visibleOrders);
     renderFilterControls(allOrders.length, visibleOrders.length, countOrdersByStatus(allOrders));
   };
 
