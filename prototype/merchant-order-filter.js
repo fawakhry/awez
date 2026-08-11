@@ -17,6 +17,11 @@
       .trim();
   }
 
+  function hasActiveFilters(status = 'all', query = '') {
+    const safeStatus = VALID_STATUSES.has(status) ? status : 'all';
+    return safeStatus !== 'all' || normalizeQuery(query) !== '';
+  }
+
   function countOrdersByStatus(list) {
     const counts = {
       all: 0,
@@ -60,7 +65,7 @@
   }
 
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { filterOrders, normalizeQuery, countOrdersByStatus };
+    module.exports = { filterOrders, normalizeQuery, countOrdersByStatus, hasActiveFilters };
   }
 
   if (typeof window === 'undefined' || typeof renderMerchantOrders !== 'function') return;
@@ -76,6 +81,7 @@
     if (!root) return;
 
     const toolbar = document.createElement('div');
+    const filtersActive = hasActiveFilters(activeStatus, activeQuery);
     toolbar.className = 'card';
     toolbar.style.marginBottom = '14px';
     toolbar.innerHTML = `
@@ -93,6 +99,7 @@
         <label>بحث في الطلبات
           <input id="merchantOrderSearch" type="search" placeholder="رقم الطلب، العميل، الهاتف أو المنتج" autocomplete="off">
         </label>
+        <button id="merchantOrderClearFilters" type="button"${filtersActive ? '' : ' disabled'}>مسح الفلاتر</button>
       </div>
       <p id="merchantOrderFilterStatus" class="muted" role="status" aria-live="polite" style="margin-bottom:0">
         عرض ${visible} من ${total} طلب
@@ -101,6 +108,7 @@
     root.prepend(toolbar);
     const select = toolbar.querySelector('#merchantOrderStatusFilter');
     const input = toolbar.querySelector('#merchantOrderSearch');
+    const clearButton = toolbar.querySelector('#merchantOrderClearFilters');
     select.value = activeStatus;
     input.value = activeQuery;
 
@@ -116,6 +124,14 @@
         nextInput.focus({ preventScroll: true });
         nextInput.setSelectionRange(activeQuery.length, activeQuery.length);
       }
+    });
+    clearButton.addEventListener('click', function () {
+      if (!hasActiveFilters(activeStatus, activeQuery)) return;
+      activeStatus = 'all';
+      activeQuery = '';
+      renderMerchantOrders();
+      const nextSelect = document.getElementById('merchantOrderStatusFilter');
+      if (nextSelect) nextSelect.focus({ preventScroll: true });
     });
   }
 
