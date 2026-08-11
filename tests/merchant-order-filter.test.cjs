@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const {
   filterOrders,
   normalizeQuery,
+  createDebouncedCallback,
   countOrdersByStatus,
   hasActiveFilters,
   summarizeActiveOrders,
@@ -10,7 +11,8 @@ const {
   buildOrderStatusControlLabel,
   labelOrderStatusControls,
   ACTIVE_STATUSES,
-  ACTIVE_STATUS_LABELS
+  ACTIVE_STATUS_LABELS,
+  MERCHANT_SEARCH_DEBOUNCE_MS
 } = require('../prototype/merchant-order-filter.js');
 
 const orders = [
@@ -26,6 +28,39 @@ assert.equal(normalizeQuery('أحْمَد'), 'احمد');
 assert.deepEqual(filterOrders(orders, 'pending').map((order) => order.id), ['A-1', 'A-3']);
 assert.deepEqual(filterOrders(orders, 'all', 'بنها').map((order) => order.id), ['A-1', 'A-3', 'A-6']);
 assert.deepEqual(filterOrders(orders, 'all', 'تيشيرت').map((order) => order.id), ['A-1']);
+
+assert.equal(MERCHANT_SEARCH_DEBOUNCE_MS, 200);
+let nextTimerId = 1;
+const scheduled = new Map();
+const cleared = [];
+const calls = [];
+const fakeTimers = {
+  setTimeout(callback, delay) {
+    const id = nextTimerId++;
+    scheduled.set(id, { callback, delay });
+    return id;
+  },
+  clearTimeout(id) {
+    cleared.push(id);
+    scheduled.delete(id);
+  }
+};
+const debounced = createDebouncedCallback((value) => calls.push(value), undefined, fakeTimers);
+debounced('a');
+assert.equal(scheduled.size, 1);
+const firstTimerId = [...scheduled.keys()][0];
+assert.equal(scheduled.get(firstTimerId).delay, MERCHANT_SEARCH_DEBOUNCE_MS);
+debounced('ab');
+assert.deepEqual(cleared, [firstTimerId]);
+assert.equal(scheduled.size, 1);
+const secondTimerId = [...scheduled.keys()][0];
+scheduled.get(secondTimerId).callback();
+assert.deepEqual(calls, ['ab']);
+assert.equal(debounced.cancel(), false);
+debounced('abc');
+assert.equal(debounced.cancel(), true);
+assert.equal(scheduled.size, 0);
+assert.deepEqual(calls, ['ab']);
 
 assert.equal(hasActiveFilters(), false);
 assert.equal(hasActiveFilters('all', '   '), false);
