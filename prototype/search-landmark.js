@@ -105,6 +105,12 @@
     searchInput.setAttribute('autocomplete', 'off');
     searchInput.setAttribute('enterkeyhint', 'search');
 
+    const resultsHeading = doc.querySelector('#results .section-head h2');
+    if (resultsHeading) {
+      resultsHeading.setAttribute('aria-live', 'polite');
+      resultsHeading.setAttribute('aria-atomic', 'true');
+    }
+
     installResultsHeading(rootRef, doc);
     installSearchUrlState(rootRef, searchInput);
 
