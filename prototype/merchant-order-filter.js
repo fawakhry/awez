@@ -6,6 +6,7 @@
     preparing: 'جاري التجهيز',
     onway: 'في الطريق'
   };
+  const MERCHANT_SEARCH_DEBOUNCE_MS = 200;
   const ARABIC_DIACRITICS = /[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED]/g;
 
   function normalizeQuery(value) {
@@ -21,6 +22,29 @@
       .replace(/ة/g, 'ه')
       .replace(/\s+/g, ' ')
       .trim();
+  }
+
+  function createDebouncedCallback(callback, delay = MERCHANT_SEARCH_DEBOUNCE_MS, timers = {}) {
+    const setTimer = timers.setTimeout || setTimeout;
+    const clearTimer = timers.clearTimeout || clearTimeout;
+    let timer = null;
+
+    function debounced(...args) {
+      if (timer !== null) clearTimer(timer);
+      timer = setTimer(() => {
+        timer = null;
+        callback(...args);
+      }, delay);
+    }
+
+    debounced.cancel = function cancelDebounced() {
+      if (timer === null) return false;
+      clearTimer(timer);
+      timer = null;
+      return true;
+    };
+
+    return debounced;
   }
 
   function hasActiveFilters(status = 'all', query = '') {
@@ -107,6 +131,7 @@
     module.exports = {
       filterOrders,
       normalizeQuery,
+      createDebouncedCallback,
       countOrdersByStatus,
       hasActiveFilters,
       summarizeActiveOrders,
@@ -115,7 +140,8 @@
       buildOrderStatusControlLabel,
       labelOrderStatusControls,
       ACTIVE_STATUSES,
-      ACTIVE_STATUS_LABELS
+      ACTIVE_STATUS_LABELS,
+      MERCHANT_SEARCH_DEBOUNCE_MS
     };
   }
 
@@ -127,6 +153,14 @@
   let activeQuery = '';
   const originalRenderMerchantOrders = renderMerchantOrders;
   const originalRenderDashboard = typeof renderDashboard === 'function' ? renderDashboard : null;
+  const renderMerchantSearch = createDebouncedCallback(() => {
+    renderMerchantOrders();
+    const nextInput = document.getElementById('merchantOrderSearch');
+    if (nextInput) {
+      nextInput.focus({ preventScroll: true });
+      nextInput.setSelectionRange(activeQuery.length, activeQuery.length);
+    }
+  });
 
   function renderFilterControls(total, visible, counts) {
     const root = document.getElementById('tab-merchantOrders');
@@ -165,20 +199,17 @@
     input.value = activeQuery;
 
     select.addEventListener('change', function () {
+      renderMerchantSearch.cancel();
       activeStatus = this.value;
       renderMerchantOrders();
     });
     input.addEventListener('input', function () {
       activeQuery = this.value;
-      renderMerchantOrders();
-      const nextInput = document.getElementById('merchantOrderSearch');
-      if (nextInput) {
-        nextInput.focus({ preventScroll: true });
-        nextInput.setSelectionRange(activeQuery.length, activeQuery.length);
-      }
+      renderMerchantSearch();
     });
     clearButton.addEventListener('click', function () {
       if (!hasActiveFilters(activeStatus, activeQuery)) return;
+      renderMerchantSearch.cancel();
       activeStatus = 'all';
       activeQuery = '';
       renderMerchantOrders();
@@ -188,6 +219,7 @@
   }
 
   function openMerchantOrdersByStatus(status) {
+    renderMerchantSearch.cancel();
     activeStatus = normalizeWorkloadStatus(status);
     activeQuery = '';
     merchantTab('merchantOrders');
