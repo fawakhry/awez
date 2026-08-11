@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const { filterOrders, normalizeQuery, countOrdersByStatus } = require('../prototype/merchant-order-filter.js');
+const { filterOrders, normalizeQuery, countOrdersByStatus, hasActiveFilters } = require('../prototype/merchant-order-filter.js');
 
 const orders = [
   { id: 'A-1', status: 'pending', customer: { name: 'أحمد', phone: '0100', address: 'بنها' }, items: [{ name: 'تيشيرت' }] },
@@ -13,6 +13,12 @@ assert.equal(normalizeQuery('أحْمَد'), 'احمد');
 assert.deepEqual(filterOrders(orders, 'pending').map((order) => order.id), ['A-1', 'A-3']);
 assert.deepEqual(filterOrders(orders, 'all', 'بنها').map((order) => order.id), ['A-1', 'A-3']);
 assert.deepEqual(filterOrders(orders, 'all', 'تيشيرت').map((order) => order.id), ['A-1']);
+
+assert.equal(hasActiveFilters(), false);
+assert.equal(hasActiveFilters('all', '   '), false);
+assert.equal(hasActiveFilters('pending', ''), true);
+assert.equal(hasActiveFilters('all', 'أحمد'), true);
+assert.equal(hasActiveFilters('not-a-status', ''), false);
 
 assert.deepEqual(countOrdersByStatus(orders), {
   all: 5,
