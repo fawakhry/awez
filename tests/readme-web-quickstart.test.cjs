@@ -2,6 +2,8 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 
 const readme = fs.readFileSync('README.md', 'utf8');
+const testWorkflow = fs.readFileSync('.github/workflows/test-suite.yml', 'utf8');
+const fullTestCommand = 'node --test --test-concurrency=1';
 
 assert.match(
   readme,
@@ -22,5 +24,18 @@ assert.match(
   /للتطوير المحلي فقط/,
   'README should warn that http.server is for local development only'
 );
+assert.ok(
+  readme.includes(fullTestCommand),
+  'README should document the full local test command'
+);
+assert.ok(
+  testWorkflow.includes(`run: ${fullTestCommand}`),
+  'documented full test command should stay aligned with GitHub Actions'
+);
+assert.match(
+  readme,
+  /node --test tests\/search-landmark\.test\.cjs/,
+  'README should show how to run one focused test file'
+);
 
-console.log('README web quickstart test passed');
+console.log('README local development and test instructions passed');
