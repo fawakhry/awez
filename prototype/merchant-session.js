@@ -20,8 +20,19 @@
     try { return JSON.parse(raw); } catch { return null; }
   }
 
+  function shouldRevalidateVisibleSession(visibilityState, merchantViewActive) {
+    return visibilityState === 'visible' && merchantViewActive === true;
+  }
+
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { createSession, isSessionValid, parseSession, IDLE_TIMEOUT_MS, ABSOLUTE_TIMEOUT_MS };
+    module.exports = {
+      createSession,
+      isSessionValid,
+      parseSession,
+      shouldRevalidateVisibleSession,
+      IDLE_TIMEOUT_MS,
+      ABSOLUTE_TIMEOUT_MS
+    };
   }
 
   if (typeof window === 'undefined') return;
@@ -53,6 +64,16 @@
     if (!isSessionValid(session)) return;
     session.lastActivityAt = Date.now();
     writeSession(session);
+  }
+
+  function expireActiveMerchantSession() {
+    const merchantView = document.getElementById('merchant');
+    if (merchantView && merchantView.classList.contains('active') && !hasValidSession()) {
+      go('merchantLogin');
+      toast('انتهت جلسة التاجر بسبب عدم النشاط');
+      return true;
+    }
+    return false;
   }
 
   clearSession();
@@ -89,11 +110,13 @@
     document.addEventListener(eventName, refreshActivity, { passive: true });
   });
 
-  setInterval(function () {
+  document.addEventListener('visibilitychange', function () {
     const merchantView = document.getElementById('merchant');
-    if (merchantView && merchantView.classList.contains('active') && !hasValidSession()) {
-      go('merchantLogin');
-      toast('انتهت جلسة التاجر بسبب عدم النشاط');
+    const merchantViewActive = Boolean(merchantView && merchantView.classList.contains('active'));
+    if (shouldRevalidateVisibleSession(document.visibilityState, merchantViewActive)) {
+      expireActiveMerchantSession();
     }
-  }, 60 * 1000);
+  });
+
+  setInterval(expireActiveMerchantSession, 60 * 1000);
 })();

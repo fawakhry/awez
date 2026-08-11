@@ -3,6 +3,7 @@ const {
   createSession,
   isSessionValid,
   parseSession,
+  shouldRevalidateVisibleSession,
   IDLE_TIMEOUT_MS,
   ABSOLUTE_TIMEOUT_MS
 } = require('../prototype/merchant-session.js');
@@ -19,5 +20,8 @@ assert.equal(isSessionValid({ ...session, lastActivityAt: now + 1 }, now), false
 assert.equal(isSessionValid({ ...session, createdAt: now, lastActivityAt: now - 1 }, now), false);
 assert.deepEqual(parseSession(JSON.stringify(session)), session);
 assert.equal(parseSession('{bad json'), null);
+assert.equal(shouldRevalidateVisibleSession('visible', true), true);
+assert.equal(shouldRevalidateVisibleSession('hidden', true), false);
+assert.equal(shouldRevalidateVisibleSession('visible', false), false);
 
-console.log('Merchant session tests passed: 9');
+console.log('Merchant session tests passed: 12');
