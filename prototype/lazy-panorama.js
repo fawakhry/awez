@@ -2,11 +2,25 @@
   const PANNELLUM_CSS = 'https://cdn.jsdelivr.net/npm/pannellum@2.5.7/build/pannellum.css';
   const PANNELLUM_JS = 'https://cdn.jsdelivr.net/npm/pannellum@2.5.7/build/pannellum.js';
   const PANNELLUM_ORIGIN = new URL(PANNELLUM_JS).origin;
+  const LEGACY_PANNELLUM_PATTERN = /pannellum@2\.5\.6\/build\/pannellum\.(?:css|js)$/;
   const REFERRER_POLICY = 'no-referrer';
   let libraryPromise = null;
 
   function needsPanoramaLibrary(scope) {
     return !(scope && scope.pannellum);
+  }
+
+  function hasLegacyPanoramaAssets(doc) {
+    if (!doc || typeof doc.querySelectorAll !== 'function') return false;
+    const assets = doc.querySelectorAll('script[src], link[href]');
+    return Array.from(assets).some((asset) => {
+      const value = asset.src || asset.href || '';
+      return LEGACY_PANNELLUM_PATTERN.test(String(value));
+    });
+  }
+
+  function needsPanoramaUpgrade(scope, doc) {
+    return needsPanoramaLibrary(scope) || hasLegacyPanoramaAssets(doc);
   }
 
   function isStylesheetReady(link) {
@@ -81,7 +95,7 @@
   }
 
   function loadPanoramaLibrary() {
-    if (!needsPanoramaLibrary(window)) return Promise.resolve();
+    if (!needsPanoramaUpgrade(window, document)) return Promise.resolve();
     if (libraryPromise) return libraryPromise;
 
     libraryPromise = Promise.all([
@@ -111,8 +125,11 @@
       PANNELLUM_CSS,
       PANNELLUM_JS,
       PANNELLUM_ORIGIN,
+      LEGACY_PANNELLUM_PATTERN,
       REFERRER_POLICY,
       needsPanoramaLibrary,
+      hasLegacyPanoramaAssets,
+      needsPanoramaUpgrade,
       isStylesheetReady,
       setPanoramaBusy,
       ensurePreconnect,
@@ -130,7 +147,7 @@
   window.initTour = async function lazyInitTour() {
     setPanoramaBusy(document, true);
     try {
-      if (needsPanoramaLibrary(window)) {
+      if (needsPanoramaUpgrade(window, document)) {
         if (typeof window.toast === 'function') window.toast('جاري تحميل الجولة 360');
         try {
           await loadPanoramaLibrary();
