@@ -32,9 +32,15 @@
       return !Number.isFinite(qty) || qty <= 0;
     })) return { ok: false, reason: 'invalid-items' };
 
+    if (!Array.isArray(products) || order.items.some((line) => {
+      const product = products.find((item) => item.id === line.id);
+      const stock = Number(product && product.stock);
+      return !product || !Number.isFinite(stock) || stock < 0;
+    })) return { ok: false, reason: 'inventory-mismatch' };
+
     order.items.forEach((line) => {
       const product = products.find((item) => item.id === line.id);
-      if (product) product.stock = Number(product.stock || 0) + Number(line.qty);
+      product.stock = Number(product.stock) + Number(line.qty);
     });
     order.status = 'cancelled';
     order.cancelledAt = new Date().toISOString();
