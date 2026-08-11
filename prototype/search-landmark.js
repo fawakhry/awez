@@ -1,6 +1,8 @@
 (function (root) {
   'use strict';
 
+  const LIVE_SEARCH_DELAY_MS = 300;
+
   function buildResultsHeading(query, count) {
     const normalizedQuery = String(query || '').trim();
     const safeCount = Number.isFinite(Number(count)) ? Number(count) : 0;
@@ -76,6 +78,35 @@
     return true;
   }
 
+  function installDebouncedInputSearch(rootRef, searchInput, delay = LIVE_SEARCH_DELAY_MS) {
+    if (!rootRef || typeof rootRef.doSearch !== 'function' || !searchInput || typeof searchInput.addEventListener !== 'function') return false;
+    if (searchInput.getAttribute('data-aawz-live-search') === '1') return true;
+
+    const setTimer = typeof rootRef.setTimeout === 'function' ? rootRef.setTimeout.bind(rootRef) : setTimeout;
+    const clearTimer = typeof rootRef.clearTimeout === 'function' ? rootRef.clearTimeout.bind(rootRef) : clearTimeout;
+    let timerId = null;
+
+    function cancelPendingSearch() {
+      if (timerId === null) return false;
+      clearTimer(timerId);
+      timerId = null;
+      return true;
+    }
+
+    searchInput.addEventListener('input', function (event) {
+      if (event && event.isComposing) return;
+      cancelPendingSearch();
+      timerId = setTimer(function () {
+        timerId = null;
+        rootRef.doSearch();
+      }, delay);
+    });
+
+    searchInput.__aawzCancelPendingSearch = cancelPendingSearch;
+    searchInput.setAttribute('data-aawz-live-search', '1');
+    return true;
+  }
+
   function restoreSearchFromUrl(rootRef, searchInput) {
     if (!rootRef || typeof rootRef.doSearch !== 'function' || !searchInput) return false;
     if (searchInput.getAttribute('data-aawz-url-search-restored') === '1') return false;
@@ -113,6 +144,7 @@
 
     installResultsHeading(rootRef, doc);
     installSearchUrlState(rootRef, searchInput);
+    installDebouncedInputSearch(rootRef, searchInput);
 
     if (
       rootRef &&
@@ -122,6 +154,7 @@
     ) {
       searchInput.addEventListener('keydown', function (event) {
         if (!event || event.key !== 'Enter' || event.isComposing) return;
+        if (typeof searchInput.__aawzCancelPendingSearch === 'function') searchInput.__aawzCancelPendingSearch();
         if (typeof event.preventDefault === 'function') event.preventDefault();
         rootRef.doSearch();
       });
@@ -134,12 +167,14 @@
 
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
+      LIVE_SEARCH_DELAY_MS,
       buildResultsHeading,
       updateSearchResultsHeading,
       readSearchQueryFromUrl,
       syncSearchQueryToUrl,
       installResultsHeading,
       installSearchUrlState,
+      installDebouncedInputSearch,
       restoreSearchFromUrl,
       enhanceSearchLandmark
     };
