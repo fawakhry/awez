@@ -32,17 +32,29 @@
     return term.startsWith('و') && term.length > 2 && text.includes(term.slice(1));
   }
 
+  function indexActiveProductTextByStore(productList) {
+    const textByStore = new Map();
+    productList.forEach((product) => {
+      const storeId = product.storeId;
+      if (!product.active || !storeId) return;
+      const current = textByStore.get(storeId) || [];
+      current.push(product.name, product.category);
+      textByStore.set(storeId, current);
+    });
+    return textByStore;
+  }
+
   function filterStoresByQuery(storeList, productList, query) {
     const terms = normalize(query).split(' ').filter(Boolean);
     if (!terms.length) return storeList.slice();
 
+    const productTextByStore = indexActiveProductTextByStore(productList);
     return storeList.filter((store) => {
-      const storeProducts = productsForStore(productList, store.id).filter((product) => product.active);
       const searchableText = normalize([
         store.name,
         store.category,
         store.address,
-        ...storeProducts.flatMap((product) => [product.name, product.category]),
+        ...(productTextByStore.get(store.id) || []),
       ].join(' '));
 
       return terms.every((term) => termMatches(searchableText, term));
@@ -50,7 +62,12 @@
   }
 
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { migrateProducts, productsForStore, filterStoresByQuery };
+    module.exports = {
+      migrateProducts,
+      productsForStore,
+      indexActiveProductTextByStore,
+      filterStoresByQuery,
+    };
   }
 
   if (typeof window === 'undefined') return;
