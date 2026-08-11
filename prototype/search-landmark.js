@@ -22,6 +22,30 @@
     return true;
   }
 
+  function readSearchQueryFromUrl(rootRef) {
+    if (!rootRef || !rootRef.location) return '';
+    try {
+      const params = new URLSearchParams(rootRef.location.search || '');
+      return String(params.get('q') || '').trim();
+    } catch {
+      return '';
+    }
+  }
+
+  function syncSearchQueryToUrl(rootRef, query) {
+    if (!rootRef || !rootRef.location || !rootRef.history || typeof rootRef.history.replaceState !== 'function') return false;
+    try {
+      const url = new URL(rootRef.location.href);
+      const normalizedQuery = String(query || '').trim();
+      if (normalizedQuery) url.searchParams.set('q', normalizedQuery);
+      else url.searchParams.delete('q');
+      rootRef.history.replaceState(rootRef.history.state || null, '', `${url.pathname}${url.search}${url.hash}`);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   function installResultsHeading(rootRef, doc) {
     if (!rootRef || typeof rootRef.doSearch !== 'function') return false;
     if (rootRef.doSearch.__aawzResultsHeadingInstalled) return true;
@@ -34,6 +58,34 @@
     }
     doSearchWithHeading.__aawzResultsHeadingInstalled = true;
     rootRef.doSearch = doSearchWithHeading;
+    return true;
+  }
+
+  function installSearchUrlState(rootRef, searchInput) {
+    if (!rootRef || typeof rootRef.doSearch !== 'function' || !searchInput) return false;
+    if (rootRef.doSearch.__aawzSearchUrlInstalled) return true;
+
+    const originalDoSearch = rootRef.doSearch;
+    function doSearchWithUrlState() {
+      const result = originalDoSearch.apply(this, arguments);
+      syncSearchQueryToUrl(rootRef, searchInput.value);
+      return result;
+    }
+    doSearchWithUrlState.__aawzSearchUrlInstalled = true;
+    rootRef.doSearch = doSearchWithUrlState;
+    return true;
+  }
+
+  function restoreSearchFromUrl(rootRef, searchInput) {
+    if (!rootRef || typeof rootRef.doSearch !== 'function' || !searchInput) return false;
+    if (searchInput.getAttribute('data-aawz-url-search-restored') === '1') return false;
+
+    searchInput.setAttribute('data-aawz-url-search-restored', '1');
+    const query = readSearchQueryFromUrl(rootRef);
+    if (!query) return false;
+
+    searchInput.value = query;
+    rootRef.doSearch();
     return true;
   }
 
@@ -54,6 +106,7 @@
     searchInput.setAttribute('enterkeyhint', 'search');
 
     installResultsHeading(rootRef, doc);
+    installSearchUrlState(rootRef, searchInput);
 
     if (
       rootRef &&
@@ -69,6 +122,7 @@
       searchInput.setAttribute('data-aawz-enter-search', '1');
     }
 
+    restoreSearchFromUrl(rootRef, searchInput);
     return true;
   }
 
@@ -76,7 +130,11 @@
     module.exports = {
       buildResultsHeading,
       updateSearchResultsHeading,
+      readSearchQueryFromUrl,
+      syncSearchQueryToUrl,
       installResultsHeading,
+      installSearchUrlState,
+      restoreSearchFromUrl,
       enhanceSearchLandmark
     };
   }
