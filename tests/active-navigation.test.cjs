@@ -22,6 +22,7 @@ function makeDocument(activeId = "home") {
   ];
   return {
     activeId,
+    title: "عاوز — هتلاقي",
     buttons,
     documentElement: { dataset: {} },
     querySelector(selector) {
@@ -41,21 +42,29 @@ function makeDocument(activeId = "home") {
   assert.equal(installActiveNavigation(documentRef, rootRef), true);
   assert.equal(documentRef.buttons[3].getAttribute("aria-current"), "page");
   assert.equal(documentRef.buttons[0].getAttribute("aria-current"), null);
+  assert.equal(documentRef.title, "عاوز — هتلاقي");
 
   rootRef.go("cart");
   assert.equal(documentRef.buttons[2].getAttribute("aria-current"), "page");
   assert.equal(documentRef.buttons[3].getAttribute("aria-current"), null);
+  assert.equal(documentRef.title, "سلة المشتريات — عاوز");
+
+  rootRef.go("checkout");
+  assert.equal(documentRef.title, "تأكيد الطلب — عاوز");
 
   rootRef.go("orders");
   assert.equal(documentRef.buttons[0].getAttribute("aria-current"), "page");
   assert.equal(documentRef.buttons[4].getAttribute("aria-current"), "page");
+  assert.equal(documentRef.title, "طلباتي — عاوز");
 
   rootRef.openMerchant();
   assert.equal(documentRef.buttons[1].getAttribute("aria-current"), "page");
   assert.equal(documentRef.buttons[5].getAttribute("aria-current"), "page");
+  assert.equal(documentRef.title, "لوحة التاجر — عاوز");
 
   documentRef.activeId = "unknown";
   assert.equal(updateActiveNavigation(documentRef), "الرئيسية");
+  assert.equal(documentRef.title, "عاوز — هتلاقي");
   assert.equal(installActiveNavigation(documentRef, rootRef), false, "installation must be idempotent");
 
   console.log("active-navigation tests passed");
