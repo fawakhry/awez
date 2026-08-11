@@ -62,6 +62,10 @@
     return new Intl.NumberFormat('ar-EG').format(Number(value) || 0);
   }
 
+  function normalizeWorkloadStatus(status) {
+    return ACTIVE_STATUSES.includes(status) ? status : 'all';
+  }
+
   function buildOrderStatusControlLabel(orderId) {
     const id = String(orderId ?? '').trim();
     return id ? `تغيير حالة الطلب ${id}` : 'تغيير حالة الطلب';
@@ -107,6 +111,7 @@
       hasActiveFilters,
       summarizeActiveOrders,
       formatCount,
+      normalizeWorkloadStatus,
       buildOrderStatusControlLabel,
       labelOrderStatusControls,
       ACTIVE_STATUSES,
@@ -182,6 +187,12 @@
     });
   }
 
+  function openMerchantOrdersByStatus(status) {
+    activeStatus = normalizeWorkloadStatus(status);
+    activeQuery = '';
+    merchantTab('merchantOrders');
+  }
+
   function appendWorkloadBreakdown() {
     const root = document.getElementById('tab-dashboard');
     if (!root) return;
@@ -197,17 +208,21 @@
           <h3 id="merchantWorkloadHeading">توزيع الطلبات النشطة</h3>
           <p class="muted" style="margin:5px 0 0">${formatCount(summary.total)} طلب محتاج متابعة دلوقتي.</p>
         </div>
-        <button class="ghost" type="button" id="openMerchantWorkloadOrders">عرض الطلبات</button>
+        <button class="ghost" type="button" id="openMerchantWorkloadOrders">عرض كل الطلبات</button>
       </div>
       <div class="stat-grid">
         ${ACTIVE_STATUSES.map((status) => `
           <div class="card stat">
             <span class="muted">${ACTIVE_STATUS_LABELS[status]}</span>
             <strong>${formatCount(summary[status])}</strong>
+            <button class="ghost merchant-workload-status" type="button" data-status="${status}" aria-label="عرض طلبات ${ACTIVE_STATUS_LABELS[status]}">عرض</button>
           </div>`).join('')}
       </div>`;
 
-    panel.querySelector('#openMerchantWorkloadOrders')?.addEventListener('click', () => merchantTab('merchantOrders'));
+    panel.querySelector('#openMerchantWorkloadOrders')?.addEventListener('click', () => openMerchantOrdersByStatus('all'));
+    panel.querySelectorAll('.merchant-workload-status').forEach((button) => {
+      button.addEventListener('click', () => openMerchantOrdersByStatus(button.dataset.status));
+    });
     root.append(panel);
   }
 
