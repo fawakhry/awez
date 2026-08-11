@@ -6,6 +6,8 @@ const {
   hasActiveFilters,
   summarizeActiveOrders,
   formatCount,
+  buildOrderStatusControlLabel,
+  labelOrderStatusControls,
   ACTIVE_STATUSES,
   ACTIVE_STATUS_LABELS
 } = require('../prototype/merchant-order-filter.js');
@@ -68,5 +70,32 @@ assert.deepEqual(summarizeActiveOrders(null), {
 });
 assert.equal(formatCount(12), new Intl.NumberFormat('ar-EG').format(12));
 assert.equal(formatCount('bad'), new Intl.NumberFormat('ar-EG').format(0));
+
+assert.equal(buildOrderStatusControlLabel('AWZ-123'), 'تغيير حالة الطلب AWZ-123');
+assert.equal(buildOrderStatusControlLabel('  '), 'تغيير حالة الطلب');
+
+function statusControl() {
+  const attrs = new Map();
+  return {
+    setAttribute(name, value) { attrs.set(name, String(value)); },
+    getAttribute(name) { return attrs.get(name) || null; }
+  };
+}
+
+const firstStatus = statusControl();
+const secondStatus = statusControl();
+const statusContainer = {
+  querySelectorAll(selector) {
+    assert.equal(selector, '.order-card select');
+    return [firstStatus, secondStatus];
+  }
+};
+assert.equal(
+  labelOrderStatusControls(statusContainer, [{ id: 'AWZ-1' }, { id: 'AWZ-2' }]),
+  2
+);
+assert.equal(firstStatus.getAttribute('aria-label'), 'تغيير حالة الطلب AWZ-1');
+assert.equal(secondStatus.getAttribute('aria-label'), 'تغيير حالة الطلب AWZ-2');
+assert.equal(labelOrderStatusControls(null, orders), 0);
 
 console.log('merchant order filter tests passed');
