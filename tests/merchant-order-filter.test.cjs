@@ -6,6 +6,7 @@ const {
   hasActiveFilters,
   summarizeActiveOrders,
   formatCount,
+  normalizeWorkloadStatus,
   buildOrderStatusControlLabel,
   labelOrderStatusControls,
   ACTIVE_STATUSES,
@@ -70,6 +71,11 @@ assert.deepEqual(summarizeActiveOrders(null), {
 });
 assert.equal(formatCount(12), new Intl.NumberFormat('ar-EG').format(12));
 assert.equal(formatCount('bad'), new Intl.NumberFormat('ar-EG').format(0));
+assert.equal(normalizeWorkloadStatus('pending'), 'pending');
+assert.equal(normalizeWorkloadStatus('preparing'), 'preparing');
+assert.equal(normalizeWorkloadStatus('onway'), 'onway');
+assert.equal(normalizeWorkloadStatus('delivered'), 'all');
+assert.equal(normalizeWorkloadStatus('not-a-status'), 'all');
 
 assert.equal(buildOrderStatusControlLabel('AWZ-123'), 'تغيير حالة الطلب AWZ-123');
 assert.equal(buildOrderStatusControlLabel('  '), 'تغيير حالة الطلب');
