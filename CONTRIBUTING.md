@@ -17,13 +17,19 @@
 node --check prototype/<file>.js
 ```
 
-ثم شغّل الاختبار المرتبط بالتغيير:
+ثم شغّل الاختبار المرتبط بالتغيير باستخدام Node.js Test Runner:
 
 ```bash
-node tests/<test-file>.test.cjs
+node --test tests/<test-file>.test.cjs
 ```
 
-بعض الاختبارات تستخدم الامتداد `.test.js`. أوامر CI الفعلية الموجودة في `.github/workflows/deploy-pages.yml` هي المرجع النهائي لمعرفة الاختبارات التي يجب أن تنجح قبل الدمج.
+وقبل فتح Pull Request شغّل مجموعة الاختبارات الكاملة نفسها المستخدمة في CI:
+
+```bash
+node --test --test-concurrency=1
+```
+
+ملفات `.github/workflows/test-suite.yml` و`.github/workflows/deploy-pages.yml` هي المرجع النهائي للفحوص الآلية. الـPR الذي يغيّر ملفات التشغيل أو الاختبارات يجب أن ينجح في **Complete test suite**، وأي تغيير يدخل النسخة المنشورة يجب أن ينجح أيضًا في **Test and deploy Aawz prototype** قبل الدمج.
 
 ## Pull Request جيد
 
