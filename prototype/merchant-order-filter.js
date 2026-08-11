@@ -1,5 +1,11 @@
 (function () {
   const VALID_STATUSES = new Set(['all', 'pending', 'preparing', 'onway', 'delivered', 'cancelled']);
+  const ACTIVE_STATUSES = ['pending', 'preparing', 'onway'];
+  const ACTIVE_STATUS_LABELS = {
+    pending: 'جديد',
+    preparing: 'جاري التجهيز',
+    onway: 'في الطريق'
+  };
   const ARABIC_DIACRITICS = /[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED]/g;
 
   function normalizeQuery(value) {
@@ -42,6 +48,20 @@
     return counts;
   }
 
+  function summarizeActiveOrders(list) {
+    const byStatus = countOrdersByStatus(list);
+    return {
+      pending: byStatus.pending,
+      preparing: byStatus.preparing,
+      onway: byStatus.onway,
+      total: byStatus.pending + byStatus.preparing + byStatus.onway
+    };
+  }
+
+  function formatCount(value) {
+    return new Intl.NumberFormat('ar-EG').format(Number(value) || 0);
+  }
+
   function filterOrders(list, status = 'all', query = '') {
     const safeStatus = VALID_STATUSES.has(status) ? status : 'all';
     const normalizedQuery = normalizeQuery(query);
@@ -65,7 +85,16 @@
   }
 
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { filterOrders, normalizeQuery, countOrdersByStatus, hasActiveFilters };
+    module.exports = {
+      filterOrders,
+      normalizeQuery,
+      countOrdersByStatus,
+      hasActiveFilters,
+      summarizeActiveOrders,
+      formatCount,
+      ACTIVE_STATUSES,
+      ACTIVE_STATUS_LABELS
+    };
   }
 
   if (typeof window === 'undefined' || typeof renderMerchantOrders !== 'function') return;
@@ -75,6 +104,7 @@
   let activeStatus = 'all';
   let activeQuery = '';
   const originalRenderMerchantOrders = renderMerchantOrders;
+  const originalRenderDashboard = typeof renderDashboard === 'function' ? renderDashboard : null;
 
   function renderFilterControls(total, visible, counts) {
     const root = document.getElementById('tab-merchantOrders');
@@ -135,6 +165,35 @@
     });
   }
 
+  function appendWorkloadBreakdown() {
+    const root = document.getElementById('tab-dashboard');
+    if (!root) return;
+
+    const summary = summarizeActiveOrders(orders);
+    const panel = document.createElement('section');
+    panel.className = 'card';
+    panel.style.marginTop = '14px';
+    panel.setAttribute('aria-labelledby', 'merchantWorkloadHeading');
+    panel.innerHTML = `
+      <div class="section-head">
+        <div>
+          <h3 id="merchantWorkloadHeading">توزيع الطلبات النشطة</h3>
+          <p class="muted" style="margin:5px 0 0">${formatCount(summary.total)} طلب محتاج متابعة دلوقتي.</p>
+        </div>
+        <button class="ghost" type="button" id="openMerchantWorkloadOrders">عرض الطلبات</button>
+      </div>
+      <div class="stat-grid">
+        ${ACTIVE_STATUSES.map((status) => `
+          <div class="card stat">
+            <span class="muted">${ACTIVE_STATUS_LABELS[status]}</span>
+            <strong>${formatCount(summary[status])}</strong>
+          </div>`).join('')}
+      </div>`;
+
+    panel.querySelector('#openMerchantWorkloadOrders')?.addEventListener('click', () => merchantTab('merchantOrders'));
+    root.append(panel);
+  }
+
   renderMerchantOrders = function filteredMerchantOrders() {
     const allOrders = orders;
     const visibleOrders = filterOrders(allOrders, activeStatus, activeQuery);
@@ -146,4 +205,11 @@
     }
     renderFilterControls(allOrders.length, visibleOrders.length, countOrdersByStatus(allOrders));
   };
+
+  if (originalRenderDashboard) {
+    renderDashboard = function dashboardWithWorkloadBreakdown() {
+      originalRenderDashboard();
+      appendWorkloadBreakdown();
+    };
+  }
 })();
