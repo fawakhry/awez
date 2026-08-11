@@ -27,10 +27,14 @@
     const order = orders.find((item) => item.id === orderId);
     if (!order) return { ok: false, reason: 'not-found' };
     if (order.status !== 'pending') return { ok: false, reason: 'not-pending' };
+    if (!Array.isArray(order.items) || order.items.some((line) => {
+      const qty = Number(line && line.qty);
+      return !Number.isFinite(qty) || qty <= 0;
+    })) return { ok: false, reason: 'invalid-items' };
 
     order.items.forEach((line) => {
       const product = products.find((item) => item.id === line.id);
-      if (product) product.stock = Number(product.stock || 0) + Number(line.qty || 0);
+      if (product) product.stock = Number(product.stock || 0) + Number(line.qty);
     });
     order.status = 'cancelled';
     order.cancelledAt = new Date().toISOString();
