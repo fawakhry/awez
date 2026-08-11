@@ -35,10 +35,11 @@
   function indexActiveProductTextByStore(productList) {
     const textByStore = new Map();
     productList.forEach((product) => {
-      if (!product.active || !product.storeId) return;
-      const current = textByStore.get(product.storeId) || [];
+      const storeId = product.storeId;
+      if (!product.active || !storeId) return;
+      const current = textByStore.get(storeId) || [];
       current.push(product.name, product.category);
-      textByStore.set(product.storeId, current);
+      textByStore.set(storeId, current);
     });
     return textByStore;
   }
