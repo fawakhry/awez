@@ -1,8 +1,27 @@
 const assert = require('node:assert/strict');
-const { normalizeOrderId, copyOrderId, cancelPendingOrder } = require('../prototype/customer-order-cancel.js');
+const {
+  STATUS_TRANSITIONS,
+  normalizeOrderId,
+  copyOrderId,
+  cancelPendingOrder,
+  canTransitionOrderStatus,
+  transitionOrderStatus
+} = require('../prototype/customer-order-cancel.js');
 
 assert.equal(normalizeOrderId(' AWZ-1234567 '), 'AWZ-1234567');
 assert.equal(normalizeOrderId('1234567'), '');
+
+assert.deepEqual(STATUS_TRANSITIONS.pending, ['preparing', 'cancelled']);
+assert.deepEqual(STATUS_TRANSITIONS.preparing, ['onway']);
+assert.deepEqual(STATUS_TRANSITIONS.onway, ['delivered']);
+assert.deepEqual(STATUS_TRANSITIONS.delivered, []);
+assert.deepEqual(STATUS_TRANSITIONS.cancelled, []);
+assert.equal(canTransitionOrderStatus('pending', 'preparing'), true);
+assert.equal(canTransitionOrderStatus('preparing', 'onway'), true);
+assert.equal(canTransitionOrderStatus('onway', 'delivered'), true);
+assert.equal(canTransitionOrderStatus('pending', 'delivered'), false);
+assert.equal(canTransitionOrderStatus('delivered', 'pending'), false);
+assert.equal(canTransitionOrderStatus('cancelled', 'onway'), false);
 
 const products = [
   { id: 'oil', stock: 7 },
@@ -92,6 +111,53 @@ assert.deepEqual(invalidStockProducts, [
 ], 'invalid stock must leave every product untouched');
 assert.equal(invalidStockOrder[0].status, 'pending');
 
+const workflowOrders = [{ id: 'AWZ-400', status: 'pending', items: [{ id: 'oil', qty: 2 }] }];
+const workflowProducts = [{ id: 'oil', stock: 5 }];
+const preparing = transitionOrderStatus(
+  'AWZ-400',
+  'preparing',
+  workflowOrders,
+  workflowProducts,
+  () => '2026-08-11T19:45:00.000Z'
+);
+assert.equal(preparing.ok, true);
+assert.equal(workflowOrders[0].status, 'preparing');
+assert.equal(workflowOrders[0].statusUpdatedAt, '2026-08-11T19:45:00.000Z');
+
+const invalidJump = transitionOrderStatus('AWZ-400', 'delivered', workflowOrders, workflowProducts);
+assert.deepEqual(invalidJump, {
+  ok: false,
+  reason: 'invalid-transition',
+  currentStatus: 'preparing',
+  nextStatus: 'delivered'
+});
+assert.equal(workflowOrders[0].status, 'preparing', 'invalid transition must not mutate status');
+
+assert.equal(transitionOrderStatus('AWZ-400', 'onway', workflowOrders, workflowProducts).ok, true);
+assert.equal(transitionOrderStatus('AWZ-400', 'delivered', workflowOrders, workflowProducts).ok, true);
+assert.deepEqual(
+  transitionOrderStatus('AWZ-400', 'pending', workflowOrders, workflowProducts),
+  { ok: false, reason: 'invalid-transition', currentStatus: 'delivered', nextStatus: 'pending' }
+);
+
+const merchantCancelOrders = [{ id: 'AWZ-401', status: 'pending', items: [{ id: 'oil', qty: 2 }] }];
+const merchantCancelProducts = [{ id: 'oil', stock: 5 }];
+const merchantCancel = transitionOrderStatus(
+  'AWZ-401',
+  'cancelled',
+  merchantCancelOrders,
+  merchantCancelProducts,
+  () => '2026-08-11T19:46:00.000Z'
+);
+assert.equal(merchantCancel.ok, true);
+assert.equal(merchantCancelOrders[0].status, 'cancelled');
+assert.equal(merchantCancelProducts[0].stock, 7, 'merchant cancellation must use the same safe restock path');
+assert.equal(merchantCancelOrders[0].statusUpdatedAt, '2026-08-11T19:46:00.000Z');
+assert.deepEqual(
+  transitionOrderStatus('AWZ-401', 'onway', merchantCancelOrders, merchantCancelProducts),
+  { ok: false, reason: 'invalid-transition', currentStatus: 'cancelled', nextStatus: 'onway' }
+);
+
 (async () => {
   let copied = '';
   assert.deepEqual(
@@ -112,5 +178,5 @@ assert.equal(invalidStockOrder[0].status, 'pending');
     { ok: false, reason: 'clipboard-denied' }
   );
 
-  console.log('customer order cancellation and copy tests passed');
+  console.log('customer order cancellation, workflow, and copy tests passed');
 })();
