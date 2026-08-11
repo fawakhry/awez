@@ -107,6 +107,21 @@
     return true;
   }
 
+  function installEscapeClearSearch(rootRef, searchInput) {
+    if (!rootRef || typeof rootRef.doSearch !== 'function' || !searchInput || typeof searchInput.addEventListener !== 'function') return false;
+    if (searchInput.getAttribute('data-aawz-escape-clear') === '1') return true;
+
+    searchInput.addEventListener('keydown', function (event) {
+      if (!event || event.key !== 'Escape' || event.isComposing || !searchInput.value) return;
+      if (typeof searchInput.__aawzCancelPendingSearch === 'function') searchInput.__aawzCancelPendingSearch();
+      if (typeof event.preventDefault === 'function') event.preventDefault();
+      searchInput.value = '';
+      rootRef.doSearch();
+    });
+    searchInput.setAttribute('data-aawz-escape-clear', '1');
+    return true;
+  }
+
   function restoreSearchFromUrl(rootRef, searchInput) {
     if (!rootRef || typeof rootRef.doSearch !== 'function' || !searchInput) return false;
     if (searchInput.getAttribute('data-aawz-url-search-restored') === '1') return false;
@@ -145,6 +160,7 @@
     installResultsHeading(rootRef, doc);
     installSearchUrlState(rootRef, searchInput);
     installDebouncedInputSearch(rootRef, searchInput);
+    installEscapeClearSearch(rootRef, searchInput);
 
     if (
       rootRef &&
@@ -175,6 +191,7 @@
       installResultsHeading,
       installSearchUrlState,
       installDebouncedInputSearch,
+      installEscapeClearSearch,
       restoreSearchFromUrl,
       enhanceSearchLandmark
     };
