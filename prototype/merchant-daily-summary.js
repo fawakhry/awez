@@ -12,7 +12,7 @@
   }
 
   function getDailyMerchantSummary(list, now = new Date()) {
-    const summary = { total: 0, active: 0, delivered: 0, revenue: 0 };
+    const summary = { total: 0, active: 0, delivered: 0, revenue: 0, averageOrderValue: 0 };
 
     for (const order of Array.isArray(list) ? list : []) {
       if (!isSameLocalDay(order?.createdAt, now)) continue;
@@ -23,6 +23,10 @@
         summary.delivered += 1;
         summary.revenue += Number(order?.total) || 0;
       }
+    }
+
+    if (summary.delivered > 0) {
+      summary.averageOrderValue = summary.revenue / summary.delivered;
     }
 
     return summary;
@@ -63,6 +67,7 @@
         <div class="stat"><span class="muted">نشطة اليوم</span><strong>${summary.active}</strong></div>
         <div class="stat"><span class="muted">تم تسليمها</span><strong>${summary.delivered}</strong></div>
         <div class="stat"><span class="muted">مبيعات اليوم</span><strong>${money(summary.revenue)}</strong></div>
+        <div class="stat"><span class="muted">متوسط الطلب المُسلّم</span><strong>${money(summary.averageOrderValue)}</strong></div>
       </div>`;
 
     root.append(panel);
