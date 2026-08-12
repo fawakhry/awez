@@ -3,6 +3,7 @@ const {
   filterOrders,
   normalizeQuery,
   createDebouncedCallback,
+  isSameLocalDay,
   countOrdersByStatus,
   hasActiveFilters,
   summarizeActiveOrders,
@@ -28,6 +29,29 @@ assert.equal(normalizeQuery('أحْمَد'), 'احمد');
 assert.deepEqual(filterOrders(orders, 'pending').map((order) => order.id), ['A-1', 'A-3']);
 assert.deepEqual(filterOrders(orders, 'all', 'بنها').map((order) => order.id), ['A-1', 'A-3', 'A-6']);
 assert.deepEqual(filterOrders(orders, 'all', 'تيشيرت').map((order) => order.id), ['A-1']);
+
+const now = new Date(2026, 7, 13, 12, 0, 0);
+const datedOrders = [
+  { id: 'TODAY-PENDING', status: 'pending', createdAt: new Date(2026, 7, 13, 8, 15, 0).toISOString(), customer: { name: 'أحمد', address: 'بنها' }, items: [] },
+  { id: 'TODAY-DELIVERED', status: 'delivered', createdAt: new Date(2026, 7, 13, 0, 5, 0).toISOString(), customer: { name: 'سارة', address: 'بنها' }, items: [] },
+  { id: 'YESTERDAY', status: 'pending', createdAt: new Date(2026, 7, 12, 23, 55, 0).toISOString(), customer: { name: 'عمر', address: 'القاهرة' }, items: [] },
+  { id: 'INVALID-DATE', status: 'pending', createdAt: 'not-a-date', customer: { name: 'نور', address: 'بنها' }, items: [] }
+];
+assert.equal(isSameLocalDay(datedOrders[0].createdAt, now), true);
+assert.equal(isSameLocalDay(datedOrders[2].createdAt, now), false);
+assert.equal(isSameLocalDay('bad-date', now), false);
+assert.deepEqual(
+  filterOrders(datedOrders, 'all', '', 'today', now).map((order) => order.id),
+  ['TODAY-PENDING', 'TODAY-DELIVERED']
+);
+assert.deepEqual(
+  filterOrders(datedOrders, 'pending', 'بنها', 'today', now).map((order) => order.id),
+  ['TODAY-PENDING']
+);
+assert.deepEqual(
+  filterOrders(datedOrders, 'all', '', 'invalid-filter', now).map((order) => order.id),
+  ['TODAY-PENDING', 'TODAY-DELIVERED', 'YESTERDAY', 'INVALID-DATE']
+);
 
 assert.equal(MERCHANT_SEARCH_DEBOUNCE_MS, 200);
 let nextTimerId = 1;
@@ -68,7 +92,8 @@ assert.equal(hasActiveFilters(), false);
 assert.equal(hasActiveFilters('all', '   '), false);
 assert.equal(hasActiveFilters('pending', ''), true);
 assert.equal(hasActiveFilters('all', 'أحمد'), true);
-assert.equal(hasActiveFilters('not-a-status', ''), false);
+assert.equal(hasActiveFilters('all', '', 'today'), true);
+assert.equal(hasActiveFilters('not-a-status', '', 'not-a-date-filter'), false);
 
 assert.deepEqual(countOrdersByStatus(orders), {
   all: 6,
