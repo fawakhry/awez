@@ -5,6 +5,7 @@ const {
   isDraftFresh,
   parseStoredDraft,
   serializeDraft,
+  draftFingerprint,
   hasMeaningfulDraft
 } = require('../prototype/checkout-draft.js');
 
@@ -33,6 +34,15 @@ assert.equal(hasMeaningfulDraft({ payment: 'card' }), false);
 assert.equal(hasMeaningfulDraft({ notes: 'اتصل قبل الوصول' }), true);
 assert.equal(hasMeaningfulDraft(null), false);
 
+assert.equal(
+  draftFingerprint({ name: ' أحمد ', payment: 'cash' }),
+  draftFingerprint({ name: 'أحمد', payment: 'cash' })
+);
+assert.notEqual(
+  draftFingerprint({ name: 'أحمد', payment: 'cash' }),
+  draftFingerprint({ name: 'محمد', payment: 'cash' })
+);
+
 const now = 2_000_000_000_000;
 assert.equal(isDraftFresh(now - MAX_AGE_MS, now), true);
 assert.equal(isDraftFresh(now - MAX_AGE_MS - 1, now), false);
@@ -47,5 +57,7 @@ const source = require('node:fs').readFileSync(require('node:path').join(__dirna
 assert.match(source, /resetButton\.textContent = 'ابدأ من جديد'/);
 assert.match(source, /clearDraft\(\);\s*form\.reset\(\);/);
 assert.match(source, /form\.elements\.name\?\.focus\(\)/);
+assert.match(source, /if \(fingerprint === lastSavedFingerprint\) return;/);
+assert.match(source, /lastSavedFingerprint = draftFingerprint\(draft\);/);
 
 console.log('Checkout draft tests passed');
