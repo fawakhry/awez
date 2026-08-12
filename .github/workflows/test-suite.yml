@@ -1,6 +1,13 @@
 name: Complete test suite
 
 on:
+  push:
+    branches: ["main"]
+    paths:
+      - "prototype/**"
+      - "tests/**"
+      - ".github/workflows/**"
+      - ".github/pull_request_template.md"
   pull_request:
     paths:
       - "prototype/**"
