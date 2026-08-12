@@ -15,12 +15,26 @@ const orders = [
   { id: 'yesterday-delivered', createdAt: new Date(2026, 7, 8, 12, 0).toISOString(), status: 'delivered', total: 999 }
 ];
 
-assert.deepEqual(getDailyMerchantSummary(orders, now), {
+let iterations = 0;
+const trackedOrders = new Proxy(orders, {
+  get(target, property, receiver) {
+    if (property === Symbol.iterator) {
+      return function () {
+        iterations += 1;
+        return target[Symbol.iterator]();
+      };
+    }
+    return Reflect.get(target, property, receiver);
+  }
+});
+
+assert.deepEqual(getDailyMerchantSummary(trackedOrders, now), {
   total: 4,
   active: 2,
   delivered: 1,
   revenue: 150.5
 });
+assert.equal(iterations, 1, 'daily summary should scan the orders array only once');
 
 assert.deepEqual(getDailyMerchantSummary(null, now), {
   total: 0,
