@@ -36,6 +36,10 @@
     return JSON.stringify({ savedAt, data: normalizeDraft(data) });
   }
 
+  function draftFingerprint(data) {
+    return JSON.stringify(normalizeDraft(data));
+  }
+
   function hasMeaningfulDraft(data) {
     const draft = normalizeDraft(data);
     return Boolean(draft && FIELDS.some(field => field !== 'payment' && draft[field]));
@@ -49,6 +53,7 @@
       isDraftFresh,
       parseStoredDraft,
       serializeDraft,
+      draftFingerprint,
       hasMeaningfulDraft
     };
   }
@@ -63,6 +68,7 @@
 
     let saveTimer = null;
     let restoring = false;
+    let lastSavedFingerprint = null;
 
     function readForm() {
       const result = {};
@@ -73,7 +79,11 @@
     function saveDraft() {
       if (restoring) return;
       try {
-        sessionStorage.setItem(STORAGE_KEY, serializeDraft(readForm()));
+        const data = readForm();
+        const fingerprint = draftFingerprint(data);
+        if (fingerprint === lastSavedFingerprint) return;
+        sessionStorage.setItem(STORAGE_KEY, serializeDraft(data));
+        lastSavedFingerprint = fingerprint;
       } catch {
         // Storage can be unavailable in restricted browsing modes; the form remains usable.
       }
@@ -86,6 +96,7 @@
 
     function clearDraft() {
       clearTimeout(saveTimer);
+      lastSavedFingerprint = null;
       try { sessionStorage.removeItem(STORAGE_KEY); } catch {}
     }
 
@@ -124,6 +135,7 @@
           const control = form.elements[field];
           if (control) control.value = draft[field];
         }
+        lastSavedFingerprint = draftFingerprint(draft);
         restoring = false;
         if (hasMeaningfulDraft(draft)) notifyRestored();
       } else {
