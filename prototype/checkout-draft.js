@@ -36,8 +36,21 @@
     return JSON.stringify({ savedAt, data: normalizeDraft(data) });
   }
 
+  function hasMeaningfulDraft(data) {
+    const draft = normalizeDraft(data);
+    return Boolean(draft && FIELDS.some(field => field !== 'payment' && draft[field]));
+  }
+
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { STORAGE_KEY, MAX_AGE_MS, normalizeDraft, isDraftFresh, parseStoredDraft, serializeDraft };
+    module.exports = {
+      STORAGE_KEY,
+      MAX_AGE_MS,
+      normalizeDraft,
+      isDraftFresh,
+      parseStoredDraft,
+      serializeDraft,
+      hasMeaningfulDraft
+    };
   }
 
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
@@ -81,9 +94,26 @@
       notice.className = 'notice';
       notice.setAttribute('role', 'status');
       notice.setAttribute('aria-live', 'polite');
-      notice.textContent = 'تم استرجاع بيانات الطلب المحفوظة مؤقتًا على هذا التبويب.';
+
+      const message = document.createElement('span');
+      message.textContent = 'تم استرجاع بيانات الطلب المحفوظة مؤقتًا على هذا التبويب. ';
+      notice.appendChild(message);
+
+      const resetButton = document.createElement('button');
+      resetButton.type = 'button';
+      resetButton.className = 'ghost';
+      resetButton.textContent = 'ابدأ من جديد';
+      resetButton.addEventListener('click', function () {
+        clearDraft();
+        form.reset();
+        notice.textContent = 'تم مسح البيانات المسترجعة ويمكنك بدء طلب جديد.';
+        form.elements.name?.focus();
+        setTimeout(() => notice.remove(), 3000);
+      });
+      notice.appendChild(resetButton);
+
       form.parentElement?.insertBefore(notice, form);
-      setTimeout(() => notice.remove(), 5000);
+      setTimeout(() => notice.remove(), 8000);
     }
 
     try {
@@ -95,7 +125,7 @@
           if (control) control.value = draft[field];
         }
         restoring = false;
-        if (FIELDS.some(field => draft[field] && field !== 'payment')) notifyRestored();
+        if (hasMeaningfulDraft(draft)) notifyRestored();
       } else {
         sessionStorage.removeItem(STORAGE_KEY);
       }
