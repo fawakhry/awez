@@ -21,4 +21,31 @@ assert.equal(guard.shouldRecordSubmission(false), false, 'فشل الإرسال 
 const brokenStorage = { getItem() { return '{bad json'; } };
 assert.equal(guard.readRecord(brokenStorage), null, 'يجب تحمل بيانات جلسة تالفة');
 
+function fakeButton(label) {
+  const attributes = new Map();
+  return {
+    textContent: label,
+    disabled: false,
+    dataset: {},
+    setAttribute(name, value) { attributes.set(name, value); },
+    removeAttribute(name) { attributes.delete(name); },
+    getAttribute(name) { return attributes.get(name); }
+  };
+}
+
+const checkoutButton = fakeButton('تأكيد وإرسال الطلب');
+const reviewButton = fakeButton('تأكيد الطلب');
+guard.setSubmittingState([checkoutButton, reviewButton], true);
+assert.equal(checkoutButton.disabled, true, 'زر الإرسال يجب أن يتعطل أثناء الإرسال');
+assert.equal(checkoutButton.textContent, guard.SUBMITTING_LABEL, 'يجب إظهار حالة الإرسال للمستخدم');
+assert.equal(checkoutButton.getAttribute('aria-busy'), 'true', 'يجب وصف حالة الانشغال برمجيًا');
+assert.equal(reviewButton.textContent, guard.SUBMITTING_LABEL, 'زر المراجعة يجب أن يعرض نفس الحالة');
+
+guard.setSubmittingState([checkoutButton, reviewButton], false);
+assert.equal(checkoutButton.disabled, false, 'زر الإرسال يجب أن يعود متاحًا');
+assert.equal(checkoutButton.textContent, 'تأكيد وإرسال الطلب', 'يجب استعادة النص الأصلي');
+assert.equal(checkoutButton.getAttribute('aria-busy'), undefined, 'يجب إزالة حالة الانشغال بعد الإرسال');
+assert.equal(reviewButton.textContent, 'تأكيد الطلب', 'يجب استعادة نص زر المراجعة');
+assert.equal('aawzSubmitLabel' in checkoutButton.dataset, false, 'لا يجب ترك بيانات مؤقتة بعد الاستعادة');
+
 console.log('Duplicate order guard tests passed');

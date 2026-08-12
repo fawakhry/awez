@@ -8,6 +8,7 @@
 })(typeof window !== 'undefined' ? window : null, function () {
   var STORAGE_KEY = 'aawz.lastOrderSubmission.v1';
   var DEFAULT_WINDOW_MS = 15000;
+  var SUBMITTING_LABEL = 'جاري إرسال الطلب...';
 
   function normalize(value) {
     return String(value == null ? '' : value).trim().replace(/\s+/g, ' ');
@@ -53,6 +54,30 @@
     return result !== false;
   }
 
+  function setSubmittingState(buttons, submitting) {
+    (buttons || []).forEach(function (button) {
+      if (!button) return;
+      if (submitting) {
+        if (button.dataset && !Object.prototype.hasOwnProperty.call(button.dataset, 'aawzSubmitLabel')) {
+          button.dataset.aawzSubmitLabel = button.textContent || '';
+        }
+        button.disabled = true;
+        button.setAttribute?.('aria-disabled', 'true');
+        button.setAttribute?.('aria-busy', 'true');
+        button.textContent = SUBMITTING_LABEL;
+        return;
+      }
+
+      button.disabled = false;
+      button.removeAttribute?.('aria-disabled');
+      button.removeAttribute?.('aria-busy');
+      if (button.dataset && Object.prototype.hasOwnProperty.call(button.dataset, 'aawzSubmitLabel')) {
+        button.textContent = button.dataset.aawzSubmitLabel;
+        delete button.dataset.aawzSubmitLabel;
+      }
+    });
+  }
+
   function install() {
     if (typeof window.placeOrder !== 'function' || window.placeOrder.__duplicateGuardInstalled) return;
 
@@ -72,7 +97,7 @@
       }
 
       var buttons = Array.from(document.querySelectorAll('#checkoutForm button[type="submit"], #orderReviewDialog button[value="confirm"]'));
-      buttons.forEach(function (button) { button.disabled = true; button.setAttribute('aria-disabled', 'true'); });
+      setSubmittingState(buttons, true);
 
       try {
         var result = originalPlaceOrder(form);
@@ -80,7 +105,7 @@
         return result;
       } finally {
         window.setTimeout(function () {
-          buttons.forEach(function (button) { button.disabled = false; button.removeAttribute('aria-disabled'); });
+          setSubmittingState(buttons, false);
         }, 1200);
       }
     }
@@ -92,10 +117,12 @@
   return {
     STORAGE_KEY: STORAGE_KEY,
     DEFAULT_WINDOW_MS: DEFAULT_WINDOW_MS,
+    SUBMITTING_LABEL: SUBMITTING_LABEL,
     buildFingerprint: buildFingerprint,
     isDuplicate: isDuplicate,
     readRecord: readRecord,
     shouldRecordSubmission: shouldRecordSubmission,
+    setSubmittingState: setSubmittingState,
     install: install
   };
 });
