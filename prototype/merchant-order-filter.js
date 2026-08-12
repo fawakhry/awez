@@ -1,5 +1,6 @@
 (function () {
   const VALID_STATUSES = new Set(['all', 'active', 'pending', 'preparing', 'onway', 'delivered', 'cancelled']);
+  const VALID_DATE_FILTERS = new Set(['all', 'today']);
   const ACTIVE_STATUSES = ['pending', 'preparing', 'onway'];
   const ACTIVE_STATUS_LABELS = {
     pending: 'جديد',
@@ -47,9 +48,18 @@
     return debounced;
   }
 
-  function hasActiveFilters(status = 'all', query = '') {
+  function isSameLocalDay(value, now = new Date()) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime()) || Number.isNaN(now?.getTime?.())) return false;
+    return date.getFullYear() === now.getFullYear()
+      && date.getMonth() === now.getMonth()
+      && date.getDate() === now.getDate();
+  }
+
+  function hasActiveFilters(status = 'all', query = '', dateFilter = 'all') {
     const safeStatus = VALID_STATUSES.has(status) ? status : 'all';
-    return safeStatus !== 'all' || normalizeQuery(query) !== '';
+    const safeDateFilter = VALID_DATE_FILTERS.has(dateFilter) ? dateFilter : 'all';
+    return safeStatus !== 'all' || safeDateFilter !== 'all' || normalizeQuery(query) !== '';
   }
 
   function countOrdersByStatus(list) {
@@ -132,11 +142,13 @@
     return controls.length;
   }
 
-  function filterOrders(list, status = 'all', query = '') {
+  function filterOrders(list, status = 'all', query = '', dateFilter = 'all', now = new Date()) {
     const safeStatus = VALID_STATUSES.has(status) ? status : 'all';
+    const safeDateFilter = VALID_DATE_FILTERS.has(dateFilter) ? dateFilter : 'all';
     const normalizedQuery = normalizeQuery(query);
 
     return (Array.isArray(list) ? list : []).filter((order) => {
+      if (safeDateFilter === 'today' && !isSameLocalDay(order?.createdAt, now)) return false;
       if (safeStatus === 'active' && !ACTIVE_STATUSES.includes(order?.status)) return false;
       if (safeStatus !== 'all' && safeStatus !== 'active' && order?.status !== safeStatus) return false;
       if (!normalizedQuery) return true;
@@ -161,6 +173,7 @@
       filterOrders,
       normalizeQuery,
       createDebouncedCallback,
+      isSameLocalDay,
       countOrdersByStatus,
       hasActiveFilters,
       summarizeActiveOrders,
@@ -181,6 +194,7 @@
   window.__aawzMerchantOrderFilterInstalled = true;
 
   let activeStatus = 'all';
+  let activeDateFilter = 'all';
   let activeQuery = '';
   const originalRenderMerchantOrders = renderMerchantOrders;
   const originalRenderDashboard = typeof renderDashboard === 'function' ? renderDashboard : null;
@@ -198,7 +212,7 @@
     if (!root) return;
 
     const toolbar = document.createElement('div');
-    const filtersActive = hasActiveFilters(activeStatus, activeQuery);
+    const filtersActive = hasActiveFilters(activeStatus, activeQuery, activeDateFilter);
     const activeCount = counts.pending + counts.preparing + counts.onway;
     toolbar.className = 'card';
     toolbar.style.marginBottom = '14px';
@@ -215,6 +229,12 @@
             <option value="cancelled">ملغي (${counts.cancelled})</option>
           </select>
         </label>
+        <label>التاريخ
+          <select id="merchantOrderDateFilter" aria-label="فلترة الطلبات حسب التاريخ">
+            <option value="all">كل الأيام</option>
+            <option value="today">طلبات اليوم</option>
+          </select>
+        </label>
         <label>بحث في الطلبات
           <input id="merchantOrderSearch" type="search" placeholder="رقم الطلب، العميل، الهاتف أو المنتج" autocomplete="off">
         </label>
@@ -226,9 +246,11 @@
 
     root.prepend(toolbar);
     const select = toolbar.querySelector('#merchantOrderStatusFilter');
+    const dateSelect = toolbar.querySelector('#merchantOrderDateFilter');
     const input = toolbar.querySelector('#merchantOrderSearch');
     const clearButton = toolbar.querySelector('#merchantOrderClearFilters');
     select.value = activeStatus;
+    dateSelect.value = activeDateFilter;
     input.value = activeQuery;
 
     select.addEventListener('change', function () {
@@ -236,14 +258,20 @@
       activeStatus = this.value;
       renderMerchantOrders();
     });
+    dateSelect.addEventListener('change', function () {
+      renderMerchantSearch.cancel();
+      activeDateFilter = this.value;
+      renderMerchantOrders();
+    });
     input.addEventListener('input', function () {
       activeQuery = this.value;
       renderMerchantSearch();
     });
     clearButton.addEventListener('click', function () {
-      if (!hasActiveFilters(activeStatus, activeQuery)) return;
+      if (!hasActiveFilters(activeStatus, activeQuery, activeDateFilter)) return;
       renderMerchantSearch.cancel();
       activeStatus = 'all';
+      activeDateFilter = 'all';
       activeQuery = '';
       renderMerchantOrders();
       const nextSelect = document.getElementById('merchantOrderStatusFilter');
@@ -254,6 +282,7 @@
   function openMerchantOrdersByStatus(status) {
     renderMerchantSearch.cancel();
     activeStatus = normalizeWorkloadStatus(status);
+    activeDateFilter = 'all';
     activeQuery = '';
     merchantTab('merchantOrders');
   }
@@ -293,7 +322,7 @@
 
   renderMerchantOrders = function filteredMerchantOrders() {
     const allOrders = orders;
-    const visibleOrders = filterOrders(allOrders, activeStatus, activeQuery);
+    const visibleOrders = filterOrders(allOrders, activeStatus, activeQuery, activeDateFilter);
     orders = visibleOrders;
     try {
       originalRenderMerchantOrders();
