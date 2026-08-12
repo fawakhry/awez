@@ -3,6 +3,16 @@
 
   const LIVE_SEARCH_DELAY_MS = 300;
 
+  function normalizeSearchQuery(value) {
+    let normalized = String(value ?? '');
+    if (typeof normalized.normalize === 'function') {
+      try {
+        normalized = normalized.normalize('NFC');
+      } catch {}
+    }
+    return normalized.replace(/\s+/g, ' ').trim();
+  }
+
   function buildResultsHeading(query, count) {
     const normalizedQuery = String(query || '').trim();
     const safeCount = Number.isFinite(Number(count)) ? Number(count) : 0;
@@ -75,6 +85,20 @@
     }
     doSearchWithUrlState.__aawzSearchUrlInstalled = true;
     rootRef.doSearch = doSearchWithUrlState;
+    return true;
+  }
+
+  function installSearchQueryNormalization(rootRef, searchInput) {
+    if (!rootRef || typeof rootRef.doSearch !== 'function' || !searchInput) return false;
+    if (rootRef.__aawzSearchQueryNormalizationInstalled) return true;
+
+    const originalDoSearch = rootRef.doSearch;
+    function doSearchWithNormalizedQuery() {
+      searchInput.value = normalizeSearchQuery(searchInput.value);
+      return originalDoSearch.apply(this, arguments);
+    }
+    rootRef.__aawzSearchQueryNormalizationInstalled = true;
+    rootRef.doSearch = doSearchWithNormalizedQuery;
     return true;
   }
 
@@ -159,6 +183,7 @@
 
     installResultsHeading(rootRef, doc);
     installSearchUrlState(rootRef, searchInput);
+    installSearchQueryNormalization(rootRef, searchInput);
     installDebouncedInputSearch(rootRef, searchInput);
     installEscapeClearSearch(rootRef, searchInput);
 
@@ -184,12 +209,14 @@
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
       LIVE_SEARCH_DELAY_MS,
+      normalizeSearchQuery,
       buildResultsHeading,
       updateSearchResultsHeading,
       readSearchQueryFromUrl,
       syncSearchQueryToUrl,
       installResultsHeading,
       installSearchUrlState,
+      installSearchQueryNormalization,
       installDebouncedInputSearch,
       installEscapeClearSearch,
       restoreSearchFromUrl,
