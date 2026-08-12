@@ -1,4 +1,6 @@
 (function () {
+  const ACTIVE_STATUSES = new Set(['pending', 'preparing', 'onway']);
+
   function isSameLocalDay(value, now = new Date()) {
     const date = value instanceof Date ? value : new Date(value);
     const reference = now instanceof Date ? now : new Date(now);
@@ -10,16 +12,20 @@
   }
 
   function getDailyMerchantSummary(list, now = new Date()) {
-    const todayOrders = (Array.isArray(list) ? list : []).filter((order) => isSameLocalDay(order?.createdAt, now));
-    const activeStatuses = new Set(['pending', 'preparing', 'onway']);
-    const delivered = todayOrders.filter((order) => order?.status === 'delivered');
+    const summary = { total: 0, active: 0, delivered: 0, revenue: 0 };
 
-    return {
-      total: todayOrders.length,
-      active: todayOrders.filter((order) => activeStatuses.has(order?.status)).length,
-      delivered: delivered.length,
-      revenue: delivered.reduce((sum, order) => sum + (Number(order?.total) || 0), 0)
-    };
+    for (const order of Array.isArray(list) ? list : []) {
+      if (!isSameLocalDay(order?.createdAt, now)) continue;
+
+      summary.total += 1;
+      if (ACTIVE_STATUSES.has(order?.status)) summary.active += 1;
+      if (order?.status === 'delivered') {
+        summary.delivered += 1;
+        summary.revenue += Number(order?.total) || 0;
+      }
+    }
+
+    return summary;
   }
 
   if (typeof module !== 'undefined' && module.exports) {
