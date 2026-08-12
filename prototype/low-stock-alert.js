@@ -12,8 +12,13 @@
       .sort((a, b) => a.stock - b.stock || String(a.name ?? '').localeCompare(String(b.name ?? ''), 'ar'));
   }
 
+  function buildLowStockEditLabel(product) {
+    const name = String(product?.name ?? '').trim();
+    return name ? `تعديل مخزون ${name}` : 'تعديل مخزون المنتج';
+  }
+
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { DEFAULT_THRESHOLD, getLowStockProducts };
+    module.exports = { DEFAULT_THRESHOLD, getLowStockProducts, buildLowStockEditLabel };
   }
 
   if (typeof window === 'undefined' || typeof renderDashboard !== 'function') return;
@@ -56,11 +61,17 @@
         <div>${visible.map((product) => `
           <div class="row wrap" style="padding:10px 0;border-bottom:1px solid var(--line)">
             <strong>${escapeHtml(product.icon || '🛒')} ${escapeHtml(product.name)}</strong>
-            <span class="status ${product.stock === 0 ? 's-cancelled' : 's-pending'}">${product.stock === 0 ? 'نفد' : `${product.stock} متبقي`}</span>
+            <div class="toolbar">
+              <span class="status ${product.stock === 0 ? 's-cancelled' : 's-pending'}">${product.stock === 0 ? 'نفد' : `${product.stock} متبقي`}</span>
+              <button class="ghost low-stock-edit" type="button" data-product-id="${escapeHtml(String(product.id ?? ''))}" aria-label="${escapeHtml(buildLowStockEditLabel(product))}">تعديل</button>
+            </div>
           </div>`).join('')}</div>
         ${lowStock.length > visible.length ? `<p class="muted" style="margin-bottom:0">و${lowStock.length - visible.length} منتجات أخرى.</p>` : ''}`;
 
       panel.querySelector('#openLowStockProducts')?.addEventListener('click', () => merchantTab('products'));
+      panel.querySelectorAll('.low-stock-edit').forEach((button) => {
+        button.addEventListener('click', () => openProductModal(button.dataset.productId));
+      });
     }
 
     root.append(panel);
