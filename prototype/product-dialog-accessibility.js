@@ -10,6 +10,16 @@
     "[tabindex]:not([tabindex='-1'])"
   ].join(",");
 
+  function installToastStatus(documentRef) {
+    if (!documentRef || typeof documentRef.getElementById !== "function") return false;
+    const toast = documentRef.getElementById("toast");
+    if (!toast || typeof toast.setAttribute !== "function") return false;
+
+    toast.setAttribute("role", "status");
+    toast.setAttribute("aria-atomic", "true");
+    return true;
+  }
+
   function installProductDialogAccessibility(documentRef, rootRef) {
     if (!documentRef || !rootRef || documentRef.documentElement.dataset.productDialogA11y === "1") return false;
 
@@ -77,6 +87,9 @@
     return true;
   }
 
-  if (typeof module !== "undefined" && module.exports) module.exports = { installProductDialogAccessibility, FOCUSABLE_SELECTOR };
-  if (root.document) installProductDialogAccessibility(root.document, root);
+  if (typeof module !== "undefined" && module.exports) module.exports = { installProductDialogAccessibility, installToastStatus, FOCUSABLE_SELECTOR };
+  if (root.document) {
+    installToastStatus(root.document);
+    installProductDialogAccessibility(root.document, root);
+  }
 })(typeof window !== "undefined" ? window : globalThis);
