@@ -21,6 +21,10 @@ const injectedAssets = [...workflow.matchAll(/(?:src|href)="\.\/([^"?#]+)"/g)]
   .map((match) => match[1]);
 
 assert.ok(injectedAssets.length > 0, 'Expected local assets injected by the Pages workflow');
+assert.ok(
+  injectedAssets.includes('product-dialog-accessibility.js'),
+  'Pages deployment must include the product dialog accessibility runtime'
+);
 assert.equal(
   new Set(injectedAssets).size,
   injectedAssets.length,

@@ -267,6 +267,9 @@ jobs:
       - name: Add active navigation state
         run: sed -i 's#</body>#<script src="./active-navigation.js"></script></body>#' prototype/index.html
 
+      - name: Add product dialog accessibility
+        run: sed -i 's#</body>#<script src="./product-dialog-accessibility.js"></script></body>#' prototype/index.html
+
       - name: Add customer order cancellation
         run: sed -i 's#</body>#<script src="./customer-order-cancel.js"></script></body>#' prototype/index.html
 
