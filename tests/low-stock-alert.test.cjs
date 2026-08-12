@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const { DEFAULT_THRESHOLD, getLowStockProducts, buildLowStockEditLabel } = require('../prototype/low-stock-alert.js');
+const { DEFAULT_THRESHOLD, getLowStockProducts, summarizeLowStock, buildLowStockEditLabel } = require('../prototype/low-stock-alert.js');
 
 assert.equal(DEFAULT_THRESHOLD, 5);
 
@@ -11,8 +11,9 @@ const products = [
   { id: 'text', name: 'مكرونة', stock: '3', active: true }
 ];
 
+const lowStock = getLowStockProducts(products);
 assert.deepEqual(
-  getLowStockProducts(products).map(({ id, stock }) => ({ id, stock })),
+  lowStock.map(({ id, stock }) => ({ id, stock })),
   [
     { id: 'zero', stock: 0 },
     { id: 'text', stock: 3 },
@@ -20,6 +21,9 @@ assert.deepEqual(
   ]
 );
 
+assert.deepEqual(summarizeLowStock(lowStock), { total: 3, outOfStock: 1, lowOnly: 2 });
+assert.deepEqual(summarizeLowStock([]), { total: 0, outOfStock: 0, lowOnly: 0 });
+assert.deepEqual(summarizeLowStock(null), { total: 0, outOfStock: 0, lowOnly: 0 });
 assert.deepEqual(getLowStockProducts(products, 2).map((product) => product.id), ['zero']);
 assert.deepEqual(getLowStockProducts(null), []);
 assert.equal(getLowStockProducts([{ id: 'negative', stock: -4, active: true }])[0].stock, 0);
