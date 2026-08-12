@@ -12,13 +12,23 @@
       .sort((a, b) => a.stock - b.stock || String(a.name ?? '').localeCompare(String(b.name ?? ''), 'ar'));
   }
 
+  function summarizeLowStock(list) {
+    const products = Array.isArray(list) ? list : [];
+    const outOfStock = products.filter((product) => Number(product?.stock) === 0).length;
+    return {
+      total: products.length,
+      outOfStock,
+      lowOnly: Math.max(0, products.length - outOfStock)
+    };
+  }
+
   function buildLowStockEditLabel(product) {
     const name = String(product?.name ?? '').trim();
     return name ? `تعديل مخزون ${name}` : 'تعديل مخزون المنتج';
   }
 
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { DEFAULT_THRESHOLD, getLowStockProducts, buildLowStockEditLabel };
+    module.exports = { DEFAULT_THRESHOLD, getLowStockProducts, summarizeLowStock, buildLowStockEditLabel };
   }
 
   if (typeof window === 'undefined' || typeof renderDashboard !== 'function') return;
@@ -34,6 +44,7 @@
     if (!root) return;
 
     const lowStock = getLowStockProducts(products);
+    const summary = summarizeLowStock(lowStock);
     const panel = document.createElement('section');
     panel.className = 'card';
     panel.style.marginTop = '14px';
@@ -54,7 +65,7 @@
         <div class="section-head">
           <div>
             <h3 id="lowStockHeading">تنبيه مخزون منخفض</h3>
-            <p class="muted" style="margin:5px 0 0">${lowStock.length} منتج وصل إلى ${DEFAULT_THRESHOLD} قطع أو أقل.</p>
+            <p class="muted" style="margin:5px 0 0">${summary.outOfStock} نفد • ${summary.lowOnly} منخفض — ${summary.total} منتج يحتاج متابعة.</p>
           </div>
           <button class="ghost" type="button" id="openLowStockProducts">إدارة المنتجات</button>
         </div>
