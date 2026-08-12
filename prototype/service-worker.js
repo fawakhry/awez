@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aawz-shell-v5';
+const CACHE_NAME = 'aawz-shell-v6';
 const APP_SHELL = [
   './',
   './index.html',
@@ -30,6 +30,7 @@ const APP_SHELL = [
   './low-stock-alert.js',
   './skip-link.js',
   './active-navigation.js',
+  './product-dialog-accessibility.js',
   './customer-order-cancel.js',
   './register-service-worker.js'
 ];
