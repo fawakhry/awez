@@ -1,5 +1,5 @@
 const assert = require("node:assert/strict");
-const { installProductDialogAccessibility } = require("../prototype/product-dialog-accessibility.js");
+const { installProductDialogAccessibility, installToastStatus } = require("../prototype/product-dialog-accessibility.js");
 
 function makeElement() {
   const attrs = new Map();
@@ -16,6 +16,7 @@ function makeElement() {
 const opener = makeElement();
 const first = makeElement();
 const last = makeElement();
+const toast = makeElement();
 const title = { id: "productModalTitle" };
 const dialog = makeElement();
 dialog.querySelector = () => first;
@@ -28,7 +29,12 @@ let keydownHandler;
 const documentRef = {
   activeElement: opener,
   documentElement: { dataset: {} },
-  getElementById(id) { return id === "productModal" ? backdrop : id === "productModalTitle" ? title : null; },
+  getElementById(id) {
+    if (id === "productModal") return backdrop;
+    if (id === "productModalTitle") return title;
+    if (id === "toast") return toast;
+    return null;
+  },
   addEventListener(type, handler) { if (type === "keydown") keydownHandler = handler; }
 };
 let opened = 0;
@@ -37,6 +43,12 @@ const rootRef = {
   openProductModal() { opened += 1; },
   closeProductModal() { closed += 1; }
 };
+
+assert.equal(installToastStatus(documentRef), true);
+assert.equal(toast.getAttribute("role"), "status");
+assert.equal(toast.getAttribute("aria-atomic"), "true");
+assert.equal(installToastStatus({ getElementById() { return null; } }), false);
+assert.equal(installToastStatus(null), false);
 
 assert.equal(installProductDialogAccessibility(documentRef, rootRef), true);
 assert.equal(dialog.getAttribute("role"), "dialog");
@@ -66,4 +78,4 @@ assert.equal(prevented, true);
 assert.equal(closed, 1, "Escape closes the dialog");
 assert.equal(documentRef.activeElement, opener, "closing restores focus to the opener");
 
-console.log("product-dialog-accessibility tests passed");
+console.log("product-dialog-accessibility and toast status tests passed");
