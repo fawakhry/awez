@@ -62,8 +62,8 @@
     return safeStatus !== 'all' || safeDateFilter !== 'all' || normalizeQuery(query) !== '';
   }
 
-  function countOrdersByStatus(list) {
-    const counts = {
+  function emptyStatusCounts() {
+    return {
       all: 0,
       pending: 0,
       preparing: 0,
@@ -71,14 +71,18 @@
       delivered: 0,
       cancelled: 0
     };
+  }
 
-    for (const order of Array.isArray(list) ? list : []) {
-      counts.all += 1;
-      if (Object.prototype.hasOwnProperty.call(counts, order?.status)) {
-        counts[order.status] += 1;
-      }
+  function addOrderToStatusCounts(counts, order) {
+    counts.all += 1;
+    if (Object.prototype.hasOwnProperty.call(counts, order?.status)) {
+      counts[order.status] += 1;
     }
+  }
 
+  function countOrdersByStatus(list) {
+    const counts = emptyStatusCounts();
+    for (const order of Array.isArray(list) ? list : []) addOrderToStatusCounts(counts, order);
     return counts;
   }
 
@@ -142,35 +146,49 @@
     return controls.length;
   }
 
-  function filterOrders(list, status = 'all', query = '', dateFilter = 'all', now = new Date()) {
+  function orderMatchesFilter(order, safeStatus, normalizedQuery, safeDateFilter, now) {
+    if (safeDateFilter === 'today' && !isSameLocalDay(order?.createdAt, now)) return false;
+    if (safeStatus === 'active' && !ACTIVE_STATUSES.includes(order?.status)) return false;
+    if (safeStatus !== 'all' && safeStatus !== 'active' && order?.status !== safeStatus) return false;
+    if (!normalizedQuery) return true;
+
+    const customer = order?.customer || {};
+    const items = Array.isArray(order?.items) ? order.items : [];
+    const searchable = normalizeQuery([
+      order?.id,
+      customer.name,
+      customer.phone,
+      customer.address,
+      customer.notes,
+      items.map((item) => item?.name).join(' ')
+    ].join(' '));
+
+    return searchable.includes(normalizedQuery);
+  }
+
+  function filterOrdersWithCounts(list, status = 'all', query = '', dateFilter = 'all', now = new Date()) {
     const safeStatus = VALID_STATUSES.has(status) ? status : 'all';
     const safeDateFilter = VALID_DATE_FILTERS.has(dateFilter) ? dateFilter : 'all';
     const normalizedQuery = normalizeQuery(query);
+    const counts = emptyStatusCounts();
+    const visibleOrders = [];
 
-    return (Array.isArray(list) ? list : []).filter((order) => {
-      if (safeDateFilter === 'today' && !isSameLocalDay(order?.createdAt, now)) return false;
-      if (safeStatus === 'active' && !ACTIVE_STATUSES.includes(order?.status)) return false;
-      if (safeStatus !== 'all' && safeStatus !== 'active' && order?.status !== safeStatus) return false;
-      if (!normalizedQuery) return true;
+    for (const order of Array.isArray(list) ? list : []) {
+      addOrderToStatusCounts(counts, order);
+      if (orderMatchesFilter(order, safeStatus, normalizedQuery, safeDateFilter, now)) visibleOrders.push(order);
+    }
 
-      const customer = order?.customer || {};
-      const items = Array.isArray(order?.items) ? order.items : [];
-      const searchable = normalizeQuery([
-        order?.id,
-        customer.name,
-        customer.phone,
-        customer.address,
-        customer.notes,
-        items.map((item) => item?.name).join(' ')
-      ].join(' '));
+    return { visibleOrders, counts };
+  }
 
-      return searchable.includes(normalizedQuery);
-    });
+  function filterOrders(list, status = 'all', query = '', dateFilter = 'all', now = new Date()) {
+    return filterOrdersWithCounts(list, status, query, dateFilter, now).visibleOrders;
   }
 
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
       filterOrders,
+      filterOrdersWithCounts,
       normalizeQuery,
       createDebouncedCallback,
       isSameLocalDay,
@@ -322,7 +340,7 @@
 
   renderMerchantOrders = function filteredMerchantOrders() {
     const allOrders = orders;
-    const visibleOrders = filterOrders(allOrders, activeStatus, activeQuery, activeDateFilter);
+    const { visibleOrders, counts } = filterOrdersWithCounts(allOrders, activeStatus, activeQuery, activeDateFilter);
     orders = visibleOrders;
     try {
       originalRenderMerchantOrders();
@@ -332,7 +350,7 @@
     const root = document.getElementById('tab-merchantOrders');
     labelOrderStatusControls(root, visibleOrders);
     appendOrderNotes(root, visibleOrders);
-    renderFilterControls(allOrders.length, visibleOrders.length, countOrdersByStatus(allOrders));
+    renderFilterControls(allOrders.length, visibleOrders.length, counts);
   };
 
   if (originalRenderDashboard) {
