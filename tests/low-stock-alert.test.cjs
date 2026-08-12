@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const { DEFAULT_THRESHOLD, getLowStockProducts } = require('../prototype/low-stock-alert.js');
+const { DEFAULT_THRESHOLD, getLowStockProducts, buildLowStockEditLabel } = require('../prototype/low-stock-alert.js');
 
 assert.equal(DEFAULT_THRESHOLD, 5);
 
@@ -23,5 +23,8 @@ assert.deepEqual(
 assert.deepEqual(getLowStockProducts(products, 2).map((product) => product.id), ['zero']);
 assert.deepEqual(getLowStockProducts(null), []);
 assert.equal(getLowStockProducts([{ id: 'negative', stock: -4, active: true }])[0].stock, 0);
+assert.equal(buildLowStockEditLabel({ name: 'لبن' }), 'تعديل مخزون لبن');
+assert.equal(buildLowStockEditLabel({ name: '   ' }), 'تعديل مخزون المنتج');
+assert.equal(buildLowStockEditLabel(null), 'تعديل مخزون المنتج');
 
 console.log('low stock alert tests passed');
