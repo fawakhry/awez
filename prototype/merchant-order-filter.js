@@ -1,5 +1,5 @@
 (function () {
-  const VALID_STATUSES = new Set(['all', 'pending', 'preparing', 'onway', 'delivered', 'cancelled']);
+  const VALID_STATUSES = new Set(['all', 'active', 'pending', 'preparing', 'onway', 'delivered', 'cancelled']);
   const ACTIVE_STATUSES = ['pending', 'preparing', 'onway'];
   const ACTIVE_STATUS_LABELS = {
     pending: 'جديد',
@@ -87,7 +87,7 @@
   }
 
   function normalizeWorkloadStatus(status) {
-    return ACTIVE_STATUSES.includes(status) ? status : 'all';
+    return status === 'active' || ACTIVE_STATUSES.includes(status) ? status : 'all';
   }
 
   function buildOrderStatusControlLabel(orderId) {
@@ -137,7 +137,8 @@
     const normalizedQuery = normalizeQuery(query);
 
     return (Array.isArray(list) ? list : []).filter((order) => {
-      if (safeStatus !== 'all' && order?.status !== safeStatus) return false;
+      if (safeStatus === 'active' && !ACTIVE_STATUSES.includes(order?.status)) return false;
+      if (safeStatus !== 'all' && safeStatus !== 'active' && order?.status !== safeStatus) return false;
       if (!normalizedQuery) return true;
 
       const customer = order?.customer || {};
@@ -198,6 +199,7 @@
 
     const toolbar = document.createElement('div');
     const filtersActive = hasActiveFilters(activeStatus, activeQuery);
+    const activeCount = counts.pending + counts.preparing + counts.onway;
     toolbar.className = 'card';
     toolbar.style.marginBottom = '14px';
     toolbar.innerHTML = `
@@ -205,6 +207,7 @@
         <label>حالة الطلب
           <select id="merchantOrderStatusFilter" aria-label="فلترة الطلبات حسب الحالة">
             <option value="all">كل الحالات (${counts.all})</option>
+            <option value="active">النشطة (${activeCount})</option>
             <option value="pending">جديد (${counts.pending})</option>
             <option value="preparing">جاري التجهيز (${counts.preparing})</option>
             <option value="onway">في الطريق (${counts.onway})</option>
@@ -270,7 +273,7 @@
           <h3 id="merchantWorkloadHeading">توزيع الطلبات النشطة</h3>
           <p class="muted" style="margin:5px 0 0">${formatCount(summary.total)} طلب محتاج متابعة دلوقتي.</p>
         </div>
-        <button class="ghost" type="button" id="openMerchantWorkloadOrders">عرض كل الطلبات</button>
+        <button class="ghost" type="button" id="openMerchantWorkloadOrders">عرض الطلبات النشطة</button>
       </div>
       <div class="stat-grid">
         ${ACTIVE_STATUSES.map((status) => `
@@ -281,7 +284,7 @@
           </div>`).join('')}
       </div>`;
 
-    panel.querySelector('#openMerchantWorkloadOrders')?.addEventListener('click', () => openMerchantOrdersByStatus('all'));
+    panel.querySelector('#openMerchantWorkloadOrders')?.addEventListener('click', () => openMerchantOrdersByStatus('active'));
     panel.querySelectorAll('.merchant-workload-status').forEach((button) => {
       button.addEventListener('click', () => openMerchantOrdersByStatus(button.dataset.status));
     });
