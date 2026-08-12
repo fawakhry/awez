@@ -1,4 +1,6 @@
 (function () {
+  var CHECKOUT_LIMITS = Object.freeze({ name: 80, address: 240, notes: 500 });
+
   function normalizeSpaces(value) {
     return String(value ?? '').replace(/\s+/g, ' ').trim();
   }
@@ -12,12 +14,20 @@
     var name = normalizeSpaces(data && data.name);
     var phone = normalizeEgyptianPhone(data && data.phone);
     var address = normalizeSpaces(data && data.address);
+    var notes = normalizeSpaces(data && data.notes);
 
     if (name.length < 2) errors.name = 'اكتب اسم المستلم من حرفين على الأقل.';
+    else if (name.length > CHECKOUT_LIMITS.name) errors.name = 'اسم المستلم طويل جدًا. اختصره إلى ' + CHECKOUT_LIMITS.name + ' حرفًا أو أقل.';
     if (!/^01[0125]\d{8}$/.test(phone)) errors.phone = 'اكتب رقم موبايل مصري صحيح مكوّن من 11 رقمًا ويبدأ بـ 01.';
     if (address.length < 10) errors.address = 'اكتب عنوانًا أوضح من 10 أحرف على الأقل، مع الشارع أو علامة مميزة.';
+    else if (address.length > CHECKOUT_LIMITS.address) errors.address = 'العنوان طويل جدًا. اختصره إلى ' + CHECKOUT_LIMITS.address + ' حرفًا أو أقل.';
+    if (notes.length > CHECKOUT_LIMITS.notes) errors.notes = 'الملاحظات طويلة جدًا. اختصرها إلى ' + CHECKOUT_LIMITS.notes + ' حرفًا أو أقل.';
 
-    return { valid: Object.keys(errors).length === 0, errors: errors, values: { name: name, phone: phone, address: address } };
+    return {
+      valid: Object.keys(errors).length === 0,
+      errors: errors,
+      values: { name: name, phone: phone, address: address, notes: notes }
+    };
   }
 
   function validateCartAvailability(lines) {
@@ -44,7 +54,13 @@
   }
 
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { normalizeSpaces: normalizeSpaces, normalizeEgyptianPhone: normalizeEgyptianPhone, validateCheckoutData: validateCheckoutData, validateCartAvailability: validateCartAvailability };
+    module.exports = {
+      CHECKOUT_LIMITS: CHECKOUT_LIMITS,
+      normalizeSpaces: normalizeSpaces,
+      normalizeEgyptianPhone: normalizeEgyptianPhone,
+      validateCheckoutData: validateCheckoutData,
+      validateCartAvailability: validateCartAvailability
+    };
   }
 
   if (typeof document === 'undefined') return;
@@ -63,7 +79,7 @@
 
   function showErrors(form, result) {
     removeErrors(form);
-    var labels = { name: 'الاسم', phone: 'رقم الموبايل', address: 'العنوان' };
+    var labels = { name: 'الاسم', phone: 'رقم الموبايل', address: 'العنوان', notes: 'الملاحظات' };
     var keys = Object.keys(result.errors);
     var summary = document.createElement('div');
     summary.className = 'notice';
@@ -128,8 +144,15 @@
       phone.setAttribute('inputmode', 'tel');
       phone.setAttribute('maxlength', '14');
     }
-    if (form.elements.name) form.elements.name.setAttribute('autocomplete', 'name');
-    if (form.elements.address) form.elements.address.setAttribute('autocomplete', 'street-address');
+    if (form.elements.name) {
+      form.elements.name.setAttribute('autocomplete', 'name');
+      form.elements.name.setAttribute('maxlength', String(CHECKOUT_LIMITS.name));
+    }
+    if (form.elements.address) {
+      form.elements.address.setAttribute('autocomplete', 'street-address');
+      form.elements.address.setAttribute('maxlength', String(CHECKOUT_LIMITS.address));
+    }
+    if (form.elements.notes) form.elements.notes.setAttribute('maxlength', String(CHECKOUT_LIMITS.notes));
 
     form.addEventListener('submit', function (event) {
       var data = Object.fromEntries(new FormData(form));
