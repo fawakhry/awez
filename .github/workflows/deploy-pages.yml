@@ -184,6 +184,9 @@ jobs:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
 
+      - name: Add referrer privacy policy
+        run: sed -i 's#<head>#<head><meta name="referrer" content="no-referrer">#' prototype/index.html
+
       - name: Add web app manifest
         run: sed -i 's#</head>#<link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon-192.svg" type="image/svg+xml"></head>#' prototype/index.html
 
