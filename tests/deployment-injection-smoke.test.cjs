@@ -16,6 +16,11 @@ assert.match(
   /<\/body>/,
   'prototype/index.html must keep the exact </body> anchor used by deployment injections'
 );
+assert.match(
+  workflow,
+  /<meta name="referrer" content="no-referrer">/,
+  'Pages deployment must apply the no-referrer policy before publishing the app'
+);
 
 const injectedAssets = [...workflow.matchAll(/(?:src|href)="\.\/([^"?#]+)"/g)]
   .map((match) => match[1]);
