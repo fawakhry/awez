@@ -120,6 +120,10 @@
     searchInput.addEventListener('input', function (event) {
       if (event && event.isComposing) return;
       cancelPendingSearch();
+      if (!normalizeSearchQuery(searchInput.value)) {
+        rootRef.doSearch();
+        return;
+      }
       timerId = setTimer(function () {
         timerId = null;
         rootRef.doSearch();
