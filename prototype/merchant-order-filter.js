@@ -95,6 +95,33 @@
     return id ? `تغيير حالة الطلب ${id}` : 'تغيير حالة الطلب';
   }
 
+  function getOrderNoteText(order) {
+    return String(order?.customer?.notes ?? '').trim();
+  }
+
+  function appendOrderNotes(container, list) {
+    if (!container || typeof container.querySelectorAll !== 'function') return 0;
+    const cards = Array.from(container.querySelectorAll('.order-card'));
+    const safeOrders = Array.isArray(list) ? list : [];
+    let added = 0;
+
+    cards.forEach((card, index) => {
+      const note = getOrderNoteText(safeOrders[index]);
+      if (!note || typeof card.appendChild !== 'function') return;
+      const doc = card.ownerDocument || (typeof document !== 'undefined' ? document : null);
+      if (!doc || typeof doc.createElement !== 'function') return;
+
+      const paragraph = doc.createElement('p');
+      paragraph.className = 'muted merchant-order-note';
+      paragraph.style.marginBottom = '0';
+      paragraph.textContent = `ملاحظة العميل: ${note}`;
+      card.appendChild(paragraph);
+      added += 1;
+    });
+
+    return added;
+  }
+
   function labelOrderStatusControls(container, list) {
     if (!container || typeof container.querySelectorAll !== 'function') return 0;
     const controls = Array.from(container.querySelectorAll('.order-card select'));
@@ -120,6 +147,7 @@
         customer.name,
         customer.phone,
         customer.address,
+        customer.notes,
         items.map((item) => item?.name).join(' ')
       ].join(' '));
 
@@ -138,6 +166,8 @@
       formatCount,
       normalizeWorkloadStatus,
       buildOrderStatusControlLabel,
+      getOrderNoteText,
+      appendOrderNotes,
       labelOrderStatusControls,
       ACTIVE_STATUSES,
       ACTIVE_STATUS_LABELS,
@@ -269,6 +299,7 @@
     }
     const root = document.getElementById('tab-merchantOrders');
     labelOrderStatusControls(root, visibleOrders);
+    appendOrderNotes(root, visibleOrders);
     renderFilterControls(allOrders.length, visibleOrders.length, countOrdersByStatus(allOrders));
   };
 
