@@ -2,6 +2,9 @@
   'use strict';
 
   const LIVE_SEARCH_DELAY_MS = 300;
+  const RECENT_SEARCHES_KEY = 'aawz.search.recent.v1';
+  const RECENT_SEARCHES_LIMIT = 5;
+  const RECENT_SEARCHES_LIST_ID = 'aawzRecentSearches';
 
   function normalizeSearchQuery(value) {
     let normalized = String(value ?? '');
@@ -56,6 +59,88 @@
     } catch {
       return false;
     }
+  }
+
+  function normalizeRecentSearches(values) {
+    if (!Array.isArray(values)) return [];
+    const seen = new Set();
+    const normalized = [];
+    for (const value of values) {
+      const query = normalizeSearchQuery(value);
+      if (!query || seen.has(query)) continue;
+      seen.add(query);
+      normalized.push(query);
+      if (normalized.length >= RECENT_SEARCHES_LIMIT) break;
+    }
+    return normalized;
+  }
+
+  function readRecentSearches(rootRef) {
+    if (!rootRef || !rootRef.localStorage || typeof rootRef.localStorage.getItem !== 'function') return [];
+    try {
+      const parsed = JSON.parse(rootRef.localStorage.getItem(RECENT_SEARCHES_KEY) || '[]');
+      return normalizeRecentSearches(parsed);
+    } catch {
+      return [];
+    }
+  }
+
+  function writeRecentSearches(rootRef, searches) {
+    if (!rootRef || !rootRef.localStorage || typeof rootRef.localStorage.setItem !== 'function') return false;
+    try {
+      rootRef.localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(normalizeRecentSearches(searches)));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function rememberRecentSearch(rootRef, query) {
+    const normalizedQuery = normalizeSearchQuery(query);
+    const current = readRecentSearches(rootRef);
+    if (!normalizedQuery) return current;
+    const next = [normalizedQuery, ...current.filter((item) => item !== normalizedQuery)].slice(0, RECENT_SEARCHES_LIMIT);
+    writeRecentSearches(rootRef, next);
+    return next;
+  }
+
+  function renderRecentSearchSuggestions(doc, searchInput, searches) {
+    if (!doc || typeof doc.createElement !== 'function' || !searchInput || typeof searchInput.setAttribute !== 'function') return false;
+
+    let list = typeof doc.querySelector === 'function' ? doc.querySelector(`#${RECENT_SEARCHES_LIST_ID}`) : null;
+    if (!list) {
+      list = doc.createElement('datalist');
+      list.id = RECENT_SEARCHES_LIST_ID;
+      const parent = doc.body && typeof doc.body.appendChild === 'function' ? doc.body : searchInput.parentNode;
+      if (!parent || typeof parent.appendChild !== 'function') return false;
+      parent.appendChild(list);
+    }
+
+    while (list.firstChild && typeof list.removeChild === 'function') list.removeChild(list.firstChild);
+    for (const query of normalizeRecentSearches(searches)) {
+      const option = doc.createElement('option');
+      option.value = query;
+      list.appendChild(option);
+    }
+    searchInput.setAttribute('list', RECENT_SEARCHES_LIST_ID);
+    return true;
+  }
+
+  function installRecentSearchSuggestions(rootRef, doc, searchInput) {
+    if (!rootRef || typeof rootRef.doSearch !== 'function' || !searchInput) return false;
+    if (rootRef.__aawzRecentSearchSuggestionsInstalled) return true;
+
+    renderRecentSearchSuggestions(doc, searchInput, readRecentSearches(rootRef));
+    const originalDoSearch = rootRef.doSearch;
+    function doSearchWithRecentSearches() {
+      const result = originalDoSearch.apply(this, arguments);
+      const recent = rememberRecentSearch(rootRef, searchInput.value);
+      renderRecentSearchSuggestions(doc, searchInput, recent);
+      return result;
+    }
+    rootRef.__aawzRecentSearchSuggestionsInstalled = true;
+    rootRef.doSearch = doSearchWithRecentSearches;
+    return true;
   }
 
   function installResultsHeading(rootRef, doc) {
@@ -188,6 +273,7 @@
     installResultsHeading(rootRef, doc);
     installSearchUrlState(rootRef, searchInput);
     installSearchQueryNormalization(rootRef, searchInput);
+    installRecentSearchSuggestions(rootRef, doc, searchInput);
     installDebouncedInputSearch(rootRef, searchInput);
     installEscapeClearSearch(rootRef, searchInput);
 
@@ -213,11 +299,20 @@
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
       LIVE_SEARCH_DELAY_MS,
+      RECENT_SEARCHES_KEY,
+      RECENT_SEARCHES_LIMIT,
+      RECENT_SEARCHES_LIST_ID,
       normalizeSearchQuery,
       buildResultsHeading,
       updateSearchResultsHeading,
       readSearchQueryFromUrl,
       syncSearchQueryToUrl,
+      normalizeRecentSearches,
+      readRecentSearches,
+      writeRecentSearches,
+      rememberRecentSearch,
+      renderRecentSearchSuggestions,
+      installRecentSearchSuggestions,
       installResultsHeading,
       installSearchUrlState,
       installSearchQueryNormalization,
