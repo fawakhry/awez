@@ -69,6 +69,24 @@
       '<div class="review-row review-total"><span>الإجمالي</span><strong>' + escapeHtml(money(model.total)) + '</strong></div>';
   }
 
+  function handleReviewAction(action, pendingForm, rootRef) {
+    if (!pendingForm || !rootRef) return false;
+
+    if (action === 'confirm') {
+      if (typeof rootRef.placeOrder !== 'function') return false;
+      rootRef.placeOrder(pendingForm);
+      return true;
+    }
+
+    if (action === 'cart') {
+      if (typeof rootRef.go !== 'function') return false;
+      rootRef.go('cart');
+      return true;
+    }
+
+    return false;
+  }
+
   function install() {
     var form = document.getElementById('checkoutForm');
     if (!form || form.dataset.reviewInstalled === '1') return;
@@ -81,18 +99,14 @@
     var dialog = document.createElement('dialog');
     dialog.id = 'orderReviewDialog';
     dialog.setAttribute('aria-labelledby', 'orderReviewTitle');
-    dialog.innerHTML = '<form method="dialog" class="order-review-inner"><h2 id="orderReviewTitle">راجع طلبك قبل الإرسال</h2><p class="muted">اتأكد من بيانات الاستلام والمنتجات. تقدر ترجع للتعديل قبل إنشاء الطلب.</p><div id="orderReviewContent"></div><div class="order-review-actions"><button class="ghost" value="cancel">رجوع للتعديل</button><button class="primary" value="confirm">تأكيد إرسال الطلب</button></div></form>';
+    dialog.innerHTML = '<form method="dialog" class="order-review-inner"><h2 id="orderReviewTitle">راجع طلبك قبل الإرسال</h2><p class="muted">اتأكد من بيانات الاستلام والمنتجات. تقدر ترجع للتعديل قبل إنشاء الطلب.</p><div id="orderReviewContent"></div><div class="order-review-actions"><button class="ghost" value="cart">تعديل السلة</button><button class="ghost" value="cancel">رجوع للتعديل</button><button class="primary" value="confirm">تأكيد إرسال الطلب</button></div></form>';
     document.body.appendChild(dialog);
 
     var pendingForm = null;
     dialog.addEventListener('close', function () {
-      if (dialog.returnValue === 'confirm' && pendingForm) {
-        var target = pendingForm;
-        pendingForm = null;
-        if (typeof window.placeOrder === 'function') window.placeOrder(target);
-      } else {
-        pendingForm = null;
-      }
+      var target = pendingForm;
+      pendingForm = null;
+      handleReviewAction(dialog.returnValue, target, window);
     });
 
     document.addEventListener('submit', function (event) {
@@ -127,6 +141,7 @@
     buildReviewModel: buildReviewModel,
     validateModel: validateModel,
     renderReviewHtml: renderReviewHtml,
+    handleReviewAction: handleReviewAction,
     install: install
   };
 });
