@@ -2,9 +2,9 @@
   'use strict';
 
   const STORAGE_KEY = 'aawz.checkoutDraft.v1';
-  const MAX_AGE_MS = 24 * 60 * 60 * 1000;
+  const MAX_AGE_MS = 2 * 60 * 60 * 1000;
   const FIELDS = ['name', 'phone', 'address', 'payment', 'notes'];
-  const LIMITS = { name: 120, phone: 30, address: 500, payment: 30, notes: 500 };
+  const LIMITS = { name: 80, phone: 30, address: 240, payment: 30, notes: 500 };
 
   function cleanValue(value, limit) {
     return String(value ?? '').replace(/[\u0000-\u001F\u007F]/g, ' ').trim().slice(0, limit);
