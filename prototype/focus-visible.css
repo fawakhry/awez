@@ -6,3 +6,15 @@
 :where(.topbar, .footer-nav) :where(.nav-btn, .primary)[aria-current="page"] {
   box-shadow: 0 0 0 2px var(--brand2, #ffca55);
 }
+
+@media (forced-colors: active) {
+  :where(button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])):focus-visible {
+    outline-color: Highlight;
+  }
+
+  :where(.topbar, .footer-nav) :where(.nav-btn, .primary)[aria-current="page"] {
+    box-shadow: none;
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+}
