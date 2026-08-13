@@ -29,6 +29,10 @@ assert.equal(Object.hasOwn(normalized, 'ignored'), false);
 assert.equal(normalizeDraft({ payment: 'crypto' }).payment, 'cash');
 assert.equal(normalizeDraft(null), null);
 
+assert.equal(normalizeDraft({ name: 'ن'.repeat(81) }).name.length, 80);
+assert.equal(normalizeDraft({ address: 'ع'.repeat(241) }).address.length, 240);
+assert.equal(normalizeDraft({ notes: 'م'.repeat(501) }).notes.length, 500);
+
 assert.equal(hasMeaningfulDraft(normalized), true);
 assert.equal(hasMeaningfulDraft({ payment: 'card' }), false);
 assert.equal(hasMeaningfulDraft({ notes: 'اتصل قبل الوصول' }), true);
@@ -43,6 +47,7 @@ assert.notEqual(
   draftFingerprint({ name: 'محمد', payment: 'cash' })
 );
 
+assert.equal(MAX_AGE_MS, 2 * 60 * 60 * 1000);
 const now = 2_000_000_000_000;
 assert.equal(isDraftFresh(now - MAX_AGE_MS, now), true);
 assert.equal(isDraftFresh(now - MAX_AGE_MS - 1, now), false);
